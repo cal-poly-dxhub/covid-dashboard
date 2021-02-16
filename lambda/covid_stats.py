@@ -9,12 +9,14 @@ TIME_FORMAT = "%H:%M:%S"
 DEFAULT_CUTOFF_DATE = "2020-09-14" #start of Fall Quarter 2020
 
 def generate_available_stats():
+    start_date = get_start_date()
+
     statistics = {
         #current datetime in PST timestamp of statistics
         "updateDateTime": get_current_datetime(),
 
         #the earliest recorded testing date in the database
-        "startDate": get_start_date(),
+        "startDate": start_date,
 
         #positive student cases, including positive student cases yesterday
         "totalPositive": get_total_pos_student(),
@@ -25,8 +27,8 @@ def generate_available_stats():
         #total count of positive student cases 'within the last 7 days'
         "totalPositiveLast7": get_pos_stu_prev_days(7),
 
-        #total count of tests for students/employees since 2021-01-04
-        "testsSinceJan4": get_tests_since('2021-01-04'),
+        #total count of tests for students/employees since first date in database
+        "testsSinceStart": get_tests_since(start_date),
 
         #statistics including pos tests, total tests, and daily rolling 7-day % of pos tests over all tests administered
         "dailyTestPos": get_daily_pos_tests(),
@@ -169,15 +171,16 @@ def get_pos_stu_prev_days(days, since_date = None):
 
 def get_tests_since(since_date):
     tests_since_stmt = """ SELECT 	COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusStu,
-                                            COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusStu,
-                                            COUNT(CASE WHEN `Type` = 'Faculty' OR `Type` = 'Staff' THEN 1 ELSE NULL END) As employees
+                                    COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusStu,
+                                    COUNT(CASE WHEN `Type` = 'Faculty' OR `Type` = 'Staff' THEN 1 ELSE NULL END) AS employees,
+                                    COUNT(*) AS Total
                                  FROM Tests
                                  WHERE DATEDIFF(Test_Date, DATE('{}')) >= 0;""".format(since_date)
     tests_since = {
+        "total": None,
         "employees": None,
         "onCampusStu": None,
-        "offCampusStu": None,
-        "students": None
+        "offCampusStu": None
     }
 
     response = utility.get_response(tests_since_stmt)
@@ -190,7 +193,7 @@ def get_tests_since(since_date):
 
             tests_since['onCampusStu'] = sum([record.get('onCampusStu') for record in result])
             tests_since['offCampusStu'] = sum([record.get('offCampusStu') for record in result])
-            tests_since['students'] = tests_since['onCampusStu'] + tests_since['offCampusStu']
+            tests_since['total'] = sum([record.get('Total') for record in result])
         except:
             logger.error("unable to generate map object from response and format: {}".format(response))
     else:
