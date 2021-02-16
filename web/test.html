@@ -1,9 +1,17 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
     <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <meta name="viewport" content="initial-scale=1">
+        <meta http-equiv="content-language" content="en">
+        <meta name="language" content="en">
+        <meta name="msapplication-config" content="none">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/simplex/bootstrap.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/patternomaly/1.3.2/patternomaly.js"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
         <style>
             body {
                 background-color: rgb(255, 254, 250); 
@@ -11,158 +19,227 @@
             .green {
                 color: rgb(19, 63, 46); 
             }
-            .sectionTitle {
+            h2 {
+                display: table;
                 background-color: rgb(213, 227, 220); 
                 color: rgb(19, 63, 46);
                 font-size: 15px;
                 padding: 6px;
                 text-transform: uppercase;
+                font-weight: bolder;
+            }
+            .container-fluid {
+                max-width: 720px;
+            }
+            .chart-container {
+                min-height: 400px;
+                width: 100%;
+                position: relative;
+                margin-right: -15px;
+                margin-left: -15px;
+            }
+            .space-after {
+                padding-bottom: 25px;
+            }
+            a {
+                font-family: inherit;
+                text-decoration: underline;
+                color: #6f6345;
+            }
+            a:hover, a:focus, a:active {
+                color: #17476f;
+            }
+            .bold-num {
+                font-weight: bolder;
+                font-size: 40px;
+            }
+            .pos-tests-tbl {
+                margin-bottom: 0;
+                color: rgb(19, 63, 46);
+            }
+            .pos-tests-tbl th, .pos-tests-tbl td {
+                vertical-align: middle;
+                padding: 0 .3rem 0 .3rem;
             }
         </style>
     </head>
     <body>
-        <div class="container" style="max-width: 1000px">
-            <div class="row" style="margin-bottom: 20px; margin-top: 10px">
+        <div class="container-fluid" style="background-color: rgb(246, 246, 240)" role="main">
+            <!-- Intro -->
+            <div class="row" style="margin-bottom: 15px; margin-top: 10px; background-color: rgb(255, 254, 250);">
                 <div class="col">
                     <p>
-                        <b id="updateDateTime" style="font-size: 16px; font-weight: 600; color: gray;">--</b><br>
+                        <b id="updateDateTime" style="font-size: 16px; font-weight: 600; color: #666;">--</b><br>
                         Data updated Monday through Friday. Numbers reflect data from previous weekday. *Includes testing through Cal Poly Campus Health and Wellbeing and the university's ongoing testing program.
                     </p>
                 </div>
             </div>
-            <div style="background-color: rgb(246, 246, 240); padding: 10px 0px 20px 0px;">
-                <div class="row">
-                    <div class="col" align="center" style="text-align: left;">
-                        <div class="container">
-                            <p style="margin-top: 10px"><b class="sectionTitle">Positive Student Tests</b></p>
-                            <div  class="row">
-                                <div class="col">
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b style="font-size: 15px;">On-Campus</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b style="font-size: 15px;">Off-Campus</b></span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><br><b style="font-size: 15px;">Since </b><b id="tp_sinceDate" style="font-size: 15px;">--</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp_oncampus" style="font-size: 40px;">--</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp_offcampus" style="font-size: 40px;">--</b></span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><br><b style="font-size: 15px;">Last 7 Days</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp7_oncampus" style="font-size: 40px;">--</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp7_offcampus" style="font-size: 40px;">--</b></span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><br><b style="font-size: 15px;">Yesterday</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp_yesterdayon" style="font-size: 40px;">--</b></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="tp_yesterdayoff" style="font-size: 40px;">--</b></span>
-                                </div>
-                            </div>
+            <!--Test Results-->
+            <div class="row">
+                <div class="col-sm space-after">
+                    <h2>Positive Student Tests</h2>
+                    <table class="table table-borderless pos-tests-tbl">
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <th scope="col">On-Campus</th>
+                                <th scope="col">Off-Campus</th>
+                            </tr>
+                            <tr>
+                                <th scope="row">Total Since<br><b id="tp_sinceDate">--</b></th>
+                                <td class="bold-num" id="tp_oncampus">--</td>
+                                <td class="bold-num" id="tp_offcampus">--</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last 7 Days</th>
+                                <td class="bold-num" id="tp7_oncampus">--</td>
+                                <td class="bold-num" id="tp7_offcampus">--</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Yesterday</th>
+                                <td class="bold-num" id="tp_yesterdayon">--</td>
+                                <td class="bold-num" id="tp_yesterdayoff">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-sm space-after">
+                    <h2>Total Tests Since Jul 10, 2020</h2>
+                    <div class="row green">
+                        <div class="col-6">
+                            <span class="bold-num" id="ttsj4_total">--</span><br>Total
                         </div>
-                    </div>
-                    <div class="col" align="center" style="text-align: left;">
-                        <div class="container">
-                            <p style="margin-top: 10px"><b class="sectionTitle">Total Tests Since Jan 4, 2021</b></p>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><b id="ttsj4_students" style="font-size: 40px;">--</b><br>Students<br></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="ttsj4_onCampus" style="font-size: 40px;">--</b><br>On-Campus Students<br></span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><b id="ttsj4_offCampus" style="font-size: 40px;">--</b><br>Off-Campus Students<br></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="ttsj4_employee" style="font-size: 40px;">--</b><br>Employees</span>
-                                </div>
-                            </div>
+                        <div class="col-6">
+                            <span class="bold-num" id="ttsj4_employee">--</span><br>Employees
+                        </div>
+                        <div class="col-6">
+                            <span class="bold-num" id="ttsj4_onCampus">--</span><br>On-Campus Students
+                        </div>
+                        <div class="col-6">
+                            <span class="bold-num" id="ttsj4_offCampus">--</span><br>Off-Campus Students
                         </div>
                     </div>
                 </div>
-                <div class="row" style="margin-top: 50px;">
-                    <div class="col" align="center"  style="text-align: left;">
-                        <div class="container">
-                            <p style="margin-top: 20px"><b class="sectionTitle">Isolation and Quarantine On Campus</b></p>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><b id="qqip_isolation" style="font-size: 40px;">0</b><br>Students in Isolation</span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="qqip_selfQ" style="font-size: 40px;">0</b><br>Students in Quarantine<br></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="qqip_qInPlace" style="font-size: 40px;">0</b><br>Students in Quarantine In Place</span>
-                                </div>
-                            </div>
+            </div>
+            <!--I/Q/QiP & Beds-->
+            <div class="row">
+                <div class="col-sm-7 space-after">
+                    <h2>Isolation and Quarantine On Campus</h2>
+                    <div class="row green">
+                        <div class="col">
+                            <span class="bold-num" id="qqip_isolation">0</span><br>Students in Isolation
+                        </div>
+                        <div class="col">
+                            <span class="bold-num" id="qqip_selfQ">0</span><br>Students in Quarantine
+                        </div>
+                        <div class="col-5">
+                            <span class="bold-num" id="qqip_qInPlace">0</span><br>Students in Quarantine In Place
                         </div>
                     </div>
-                    <div class="col" align="center"  style="text-align: left;">
-                        <div class="container">
-                            <p style="margin-top: 20px"><b class="sectionTitle">Isolation/Quarantine Beds Available</b></p>
-                            <div class="row">
-                                <div class="col">
-                                    <span class="green"><b id="iso_beds_occu" style="font-size: 40px;">0</b><br>Beds Occupied<br></span>
-                                </div>
-                                <div class="col">
-                                    <span class="green"><b id="iso_beds_total" style="font-size: 40px;">0</b><br>Total Beds<br></span>
-                                </div>
-                            </div>
+                </div>
+                <div class="col-sm-5 space-after">
+                    <h2>Isolation/Quarantine Beds Available</h2>
+                    <div class="row green">
+                        <div class="col">
+                            <span class="bold-num" id="iso_beds_occu">0</span><br>Beds Occupied
+                        </div>
+                        <div class="col">
+                            <span class="bold-num" id="iso_beds_total">0</span><br>Total Beds
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="row" style="margin-top: 60px">
-                <div class="col" align="center">
-                    <div style="text-align: left;" class="green">
-                        <p style="font-size: 18px; font-weight: 600">Daily Tests and Positive Cases with 7-Day Avg Positivity Rate</p>
+            <!--Graph: Daily Tests with 7-Day Avg Positivity Rate-->
+            <div class="row space-after">
+                <div class="col">
+                    <h2>Daily Tests and Positive Cases with 7-Day Avg Positivity Rate</h2>
+                    <div id="dailyTestPos">
+                        <div class="chart-container">
+                            <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
+                        </div>
+                        <p><a class="toggle-data-table" href="#">Show/hide chart data table</a></p>
+                        <div class="chart-data-table" style="display: none;">
+                            <table class="table table-sm table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">7-day Avg Positivity</th>
+                                        <th scope="col">Positive Tests</th>
+                                        <th scope="col">Daily Tests</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <canvas id="dailyTestPos"></canvas>
                 </div>
             </div>
-            <div class="row" style="margin-top: 60px">
-                <div class="col" align="center">
-                    <div style="text-align: left;" class="green">
-                        <p style="font-size: 18px; font-weight: 600">New Student Cases</p>
+            <!--Graph: New Student Cases-->
+            <div class="row space-after">
+                <div class="col">
+                    <h2>New Student Cases</h2>
+                    <div id="studentNewCases">
+                        <div class="chart-container">
+                            <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
+                        </div>
+                        <p><a class="toggle-data-table" href="#">Show/hide chart data table</a></p>
+                        <div class="chart-data-table" style="display: none;">
+                            <table class="table table-sm table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">On-Campus Students</th>
+                                        <th scope="col">Off-Campus Students</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <canvas id="studentNewCases"></canvas>
                 </div>
             </div>
-            <div class="row" style="margin-top: 60px">
-                <div class="col" align="center">
-                    <div style="text-align: left;" class="green">
-                        <p style="font-size: 18px; font-weight: 600">Symptomatic vs Asymptomatic Cases</p>
+            <!--Graph: Symptomatic vs Asymptomatic Cases-->
+            <div class="row space-after">
+                <div class="col">
+                    <h2>Symptomatic vs Asymptomatic Cases</h2>
+                    <div id="symptVsAsympt">
+                        <div class="chart-container">
+                            <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
+                        </div>
+                        <p><a class="toggle-data-table" href="#">Show/hide chart data table</a></p>
+                        <div class="chart-data-table" style="display: none;">
+                            <table class="table table-sm table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Symptomatic</th>
+                                        <th scope="col">Asymptomatic</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <canvas id="symptVsAsympt"></canvas>
                 </div>
             </div>
-            <div class="row" style="margin-top: 60px; margin-bottom: 80px;">
-                <div class="col" align="center">
-                    <div style="text-align: left;" class="green">
-                        <p style="font-size: 18px; font-weight: 600">14-day Rolling Percentage of Positive Cases Among Tests</p>
+            <!--Graph: 14-day Rolling-->
+            <div class="row space-after">
+                <div class="col">
+                    <h2>14-day Rolling Percentage of Positive Cases Among Tests</h2>
+                    <div id="rollingPosCases">
+                        <div class="chart-container">
+                            <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
+                        </div>
+                        <p><a class="toggle-data-table" href="#">Show/hide chart data table</a></p>
+                        <div class="chart-data-table" style="display: none;">
+                            <table class="table table-sm table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Students</th>
+                                        <th scope="col">Campus Employees</th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <canvas id="rollingPosCases"></canvas>
                 </div>
             </div>
         </div>
@@ -171,269 +248,330 @@
                 const response = await fetch("https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json");
                 const dataSource = await response.json();
 
-                const dateString = moment(dataSource.updateDateTime).format("MMM DD, YYYY h:mm A")
-                document.getElementById('updateDateTime').innerHTML = "Updated on " + dateString + ".";
+                $(function() {
+                    const dateString = moment(dataSource.updateDateTime).format("MMM DD, YYYY h:mm A")
+                    document.getElementById('updateDateTime').innerHTML = "Updated on " + dateString + ".";
 
-                document.getElementById('tp_sinceDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
+                    document.getElementById('tp_oncampus').innerHTML = dataSource.totalPositive.onCampusStu.toLocaleString();
+                    document.getElementById('tp_yesterdayon').innerHTML = dataSource.totalPositive.onCampusYesterday.toLocaleString();
+                    document.getElementById('tp_offcampus').innerHTML = dataSource.totalPositive.offCampusStu.toLocaleString();
+                    document.getElementById('tp_yesterdayoff').innerHTML = dataSource.totalPositive.offCampusYesterday.toLocaleString();
 
-                document.getElementById('tp_oncampus').innerHTML = dataSource.totalPositive.onCampusStu.toLocaleString();
-                document.getElementById('tp_yesterdayon').innerHTML = dataSource.totalPositive.onCampusYesterday.toLocaleString();
-                document.getElementById('tp_offcampus').innerHTML = dataSource.totalPositive.offCampusStu.toLocaleString();
-                document.getElementById('tp_yesterdayoff').innerHTML = dataSource.totalPositive.offCampusYesterday.toLocaleString();
+                    document.getElementById('tp7_oncampus').innerHTML = dataSource.totalPositiveLast7.onCampus.toLocaleString();
+                    document.getElementById('tp7_offcampus').innerHTML = dataSource.totalPositiveLast7.offCampusInSlo.toLocaleString();
 
-                document.getElementById('tp7_oncampus').innerHTML = dataSource.totalPositiveLast7.onCampus.toLocaleString();
-                document.getElementById('tp7_offcampus').innerHTML = dataSource.totalPositiveLast7.offCampusInSlo.toLocaleString();
+                    document.getElementById('tp_sinceDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
 
-                document.getElementById('ttsj4_students').innerHTML = dataSource.testsSinceJan4.students.toLocaleString();
-                document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testsSinceJan4.onCampusStu.toLocaleString();
-                document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testsSinceJan4.offCampusStu.toLocaleString();
-                document.getElementById('ttsj4_employee').innerHTML = dataSource.testsSinceJan4.employees.toLocaleString();
-                
-                document.getElementById('iso_beds_occu').innerHTML = dataSource.isoRoomsAvailable.occupied.toLocaleString();
-                document.getElementById('iso_beds_total').innerHTML = dataSource.isoRoomsAvailable.total.toLocaleString();
-                
-                document.getElementById('qqip_selfQ').innerHTML = dataSource.quarantine.selfQuarantine.toLocaleString();
-                document.getElementById('qqip_qInPlace').innerHTML = dataSource.quarantine.quarantineInPlace.toLocaleString();
-                document.getElementById('qqip_isolation').innerHTML = dataSource.quarantine.isolation.toLocaleString();
+                    document.getElementById('ttsj4_total').innerHTML = dataSource.testsSinceStart.total.toLocaleString();
+                    document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testsSinceStart.onCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testsSinceStart.offCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_employee').innerHTML = dataSource.testsSinceStart.employees.toLocaleString();
+                    
+                    document.getElementById('iso_beds_occu').innerHTML = dataSource.isoRoomsAvailable.occupied.toLocaleString();
+                    document.getElementById('iso_beds_total').innerHTML = dataSource.isoRoomsAvailable.total.toLocaleString();
+                    
+                    document.getElementById('qqip_selfQ').innerHTML = dataSource.quarantine.selfQuarantine.toLocaleString();
+                    document.getElementById('qqip_qInPlace').innerHTML = dataSource.quarantine.quarantineInPlace.toLocaleString();
+                    document.getElementById('qqip_isolation').innerHTML = dataSource.quarantine.isolation.toLocaleString();
 
 
-                var dailyTestPos = document.getElementById('dailyTestPos');
-                var mixedChart = new Chart(dailyTestPos, {
-                   type: 'bar',
-                   data: {
-                        datasets: [{
-                            type: 'line',
-                            yAxisID: 'B',
-                            label: '7-day Avg Positivity',
-                            data: dataSource.dailyTestPos.avgPos7Day && dataSource.dailyTestPos.avgPos7Day.map((dataPt) => dataPt.toFixed(3)),
-                            fill: false,
-                            backgroundColor: 'rgb(19, 63, 46)',
-                            borderColor: 'rgb(19, 63, 46)',
-                            borderWidth: 2,
-                            pointBorderWidth: 0.5
+                    //Daily Tests and Positive Cases with 7-Day Avg Positivity Rate
+                    var dailyTestPos = $('#dailyTestPos');
+                    var tbody = dailyTestPos.find('.chart-data-table table tbody');
+                    var data = dataSource.dailyTestPos;
+                    for(var i=0; i<data.dates.length; i++) {
+                        var row = '<tr>';
+                        row += '<th scope="row">'+data.dates[i]+'</th>';
+                        row += '<td>'+data.avgPos7Day[i].toFixed(3).toLocaleString()+'</td>';
+                        row += '<td>'+data.positiveTests[i].toLocaleString()+'</td>';
+                        row += '<td>'+data.dailyTests[i].toLocaleString()+'</td>';
+                        row += '</tr>';
+                        tbody.append(row);
+                    }
+                    var mixedChart = new Chart(dailyTestPos.find('.chart-container canvas'), {
+                        type: 'bar',
+                        data: {
+                            datasets: [{
+                                type: 'line',
+                                yAxisID: 'B',
+                                label: '7-day Avg Positivity',
+                                data: dataSource.dailyTestPos.avgPos7Day && dataSource.dailyTestPos.avgPos7Day.map((dataPt) => dataPt.toFixed(3)),
+                                fill: false,
+                                backgroundColor: 'rgb(19, 63, 46)',
+                                borderColor: 'rgb(19, 63, 46)',
+                                borderWidth: 2,
+                                pointBorderWidth: 0.5
 
-                        },{
-                            type: 'bar',
-                            yAxisID: 'A',
-                            label: 'Positive Tests',
-                            data: dataSource.dailyTestPos.positiveTests,
-                            backgroundColor: 'rgb(191, 134, 32)'
-                        },{
-                            type: 'bar',
-                            yAxisID: 'A',
-                            label: 'Daily Tests',
-                            data: dataSource.dailyTestPos.dailyTests,
-                            backgroundColor: 'rgb(173, 198, 187)'
-                        }],
-                        labels: dataSource.dailyTestPos.dates
-                   },
-                   options: {
-                        tooltips: {
-                           mode: 'index',
-                           position: 'nearest'
+                            },{
+                                type: 'bar',
+                                yAxisID: 'A',
+                                label: 'Positive Tests',
+                                data: dataSource.dailyTestPos.positiveTests,
+                                backgroundColor: 'rgb(191, 134, 32)'
+                            },{
+                                type: 'bar',
+                                yAxisID: 'A',
+                                label: 'Daily Tests',
+                                data: dataSource.dailyTestPos.dailyTests,
+                                backgroundColor: 'rgb(173, 198, 187)'
+                            }],
+                            labels: dataSource.dailyTestPos.dates
                         },
-                       legend: {
-                           labels: {
-                               padding: 30
-                           }
-                       }, 
-                       scales: {
-                            xAxes: [{
-                                stacked: true,
-                                gridLines: {
-                                    display: false,
-                                }
-                            }],
-                            yAxes: [{
-                                id: 'A',
-                                stacked: true,
-                                position: 'left',
-                                gridLines: {
-                                    display: false,
+                        options: {
+                            maintainAspectRatio: false,
+                            tooltips: {
+                                mode: 'index',
+                                position: 'nearest'
                                 },
-                                scaleLabel: {
-                                    display: true, 
-                                    labelString: "Tests", 
-                                    fontColor: "rgb(19, 63, 46)",
-                                    fontStyle: "bold",
-                                    fontSize: 16
+                            legend: {
+                                labels: {
+                                    padding: 15
                                 }
-                            }, {
-                                id: 'B',
-                                position: 'right',
-                                gridLines: {
-                                    display: false,
-                                },
-                                scaleLabel: {
-                                    display: true, 
-                                    labelString: "Percentage of positive tests", 
-                                    fontColor: "rgb(19, 63, 46)",
-                                    fontStyle: "bold",
-                                    fontSize: 16
-                                }
-                            }]
+                            }, 
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    gridLines: {
+                                        display: false,
+                                    }
+                                }],
+                                yAxes: [{
+                                    id: 'A',
+                                    stacked: true,
+                                    position: 'left',
+                                    gridLines: {
+                                        display: false,
+                                    },
+                                    scaleLabel: {
+                                        display: true, 
+                                        labelString: "Tests", 
+                                        fontColor: "rgb(19, 63, 46)",
+                                        fontStyle: "bold",
+                                        fontSize: 16
+                                    }
+                                }, {
+                                    id: 'B',
+                                    position: 'right',
+                                    gridLines: {
+                                        display: false,
+                                    },
+                                    scaleLabel: {
+                                        display: true, 
+                                        labelString: "Percentage of positive tests", 
+                                        fontColor: "rgb(19, 63, 46)",
+                                        fontStyle: "bold",
+                                        fontSize: 16
+                                    }
+                                }]
+                            }
                         }
-                    }
-                });
+                    });
 
-                var studentNewCases = document.getElementById('studentNewCases');
-                var mixedChart = new Chart(studentNewCases, {
-                   type: 'bar',
-                   data: {
-                        datasets: [{
-                            type: 'bar',
-                            label: 'On-Campus Students',
-                            data: dataSource.studentNewCases.onCampusCases,
-                            backgroundColor: 'rgb(191, 134, 32)'
-                        },{
-                            type: 'bar',
-                            label: 'Off-Campus Students',
-                            data: dataSource.studentNewCases.offCampusCases,
-                            backgroundColor: 'rgb(173, 198, 187)'
-                        }],
-                        labels: dataSource.studentNewCases.dates
-                   },
-                   options: {
-                        tooltips: {
-                           mode: 'index',
-                           position: 'nearest'
-                       },
-                       legend: {
-                           labels: {
-                               padding: 30
-                           }
-                       }, 
-                       scales: {
-                            xAxes: [{
-                                stacked: true,
-                                gridLines: {
-                                    display: false,
-                                }
-                            }],
-                            yAxes: [{
-                                stacked: true,
-                                gridLines: {
-                                    display: false,
-                                },
-                                scaleLabel: {
-                                    display: true, 
-                                    labelString: "Positive cases", 
-                                    fontColor: "rgb(19, 63, 46)",
-                                    fontStyle: "bold",
-                                    fontSize: 16
-                                }
-                            }]
-                        }
+                    //New Student Cases
+                    var studentNewCases = $('#studentNewCases');
+                    var tbody = studentNewCases.find('.chart-data-table table tbody');
+                    var data = dataSource.studentNewCases;
+                    for(var i=0; i<data.dates.length; i++) {
+                        var row = '<tr>';
+                        row += '<th scope="row">'+data.dates[i]+'</th>';
+                        row += '<td>'+data.onCampusCases[i].toLocaleString()+'</td>';
+                        row += '<td>'+data.offCampusCases[i].toLocaleString()+'</td>';
+                        row += '</tr>';
+                        tbody.append(row);
                     }
-                });
-                
-                var studentNewCases = document.getElementById('symptVsAsympt');
-                var mixedChart = new Chart(studentNewCases, {
-                   type: 'bar',
-                   data: {
-                        datasets: [{
-                            type: 'bar',
-                            label: 'Symptomatic',
-                            data: dataSource.symptVsAsympt.symptCases,
-                            backgroundColor: 'rgb(191, 134, 32)'
-                        },{
-                            type: 'bar',
-                            label: 'Asymptomatic',
-                            data: dataSource.symptVsAsympt.asymptCases,
-                            backgroundColor: 'rgb(173, 198, 187)'
-                        }],
-                        labels: dataSource.symptVsAsympt.dates
-                   },
-                   options: {
-                        tooltips: {
-                           mode: 'index',
-                           position: 'nearest'
-                       },
-                       legend: {
-                           labels: {
-                               padding: 30
-                           }
-                       }, 
-                       scales: {
-                            xAxes: [{
-                                stacked: true,
-                                gridLines: {
-                                    display: false,
-                                }
+                    var mixedChart = new Chart(studentNewCases.find('.chart-container canvas'), {
+                        type: 'bar',
+                        data: {
+                            datasets: [{
+                                type: 'bar',
+                                label: 'On-Campus Students',
+                                data: dataSource.studentNewCases.onCampusCases,
+                                backgroundColor: 'rgb(191, 134, 32)'
+                            },{
+                                type: 'bar',
+                                label: 'Off-Campus Students',
+                                data: dataSource.studentNewCases.offCampusCases,
+                                backgroundColor: 'rgb(173, 198, 187)'
                             }],
-                            yAxes: [{
-                                stacked: true,
-                                gridLines: {
-                                    display: false,
-                                },
-                                scaleLabel: {
-                                    display: true, 
-                                    labelString: "Positive cases", 
-                                    fontColor: "rgb(19, 63, 46)",
-                                    fontStyle: "bold",
-                                    fontSize: 16
-                                }
-                            }]
-                        }
-                    }
-                });
-
-                var rollingPosCases = document.getElementById('rollingPosCases');
-                var mixedChart = new Chart(rollingPosCases, {
-                   type: 'line',
-                   data: {
-                        datasets: [{
-                            type: 'line',
-                            label: 'Students',
-                            data: dataSource.rollingPosCases.students && dataSource.rollingPosCases.students.map((dataPt) => dataPt.toFixed(3)),
-                            fill: false,
-                            backgroundColor: 'rgb(191, 134, 32)',
-                            borderColor: 'rgb(191, 134, 32)',
-                            borderWidth: 2,
-                            pointBorderWidth: 0.5
+                            labels: dataSource.studentNewCases.dates
                         },
-                        {
-                            type: 'line',
-                            label: 'Campus Employees',
-                            data: dataSource.rollingPosCases.employees && dataSource.rollingPosCases.employees.map((dataPt) => dataPt.toFixed(3)),
-                            fill: false,
-                            backgroundColor: 'rgb(173, 198, 187)',
-                            borderColor: 'rgb(173, 198, 187)',
-                            borderWidth: 2,
-                            pointBorderWidth: 0.5
-                        }],
-                        labels: dataSource.rollingPosCases.dates
-                   },
-                   options: {
-                        tooltips: {
-                           mode: 'index',
-                           position: 'nearest'
-                       },
-                       legend: {
-                           labels: {
-                               padding: 30
-                           }
-                       }, 
-                       scales: {
-                            xAxes: [{
-                                gridLines: {
-                                    display: false,
+                        options: {
+                            maintainAspectRatio: false,
+                            tooltips: {
+                                mode: 'index',
+                                position: 'nearest'
+                            },
+                            legend: {
+                                labels: {
+                                    padding: 15
                                 }
-                            }],
-                            yAxes: [{
-                                gridLines: {
-                                    display: false,
-                                },
-                                scaleLabel: {
-                                    display: true, 
-                                    labelString: "Percentage of positive tests", 
-                                    fontColor: "rgb(19, 63, 46)",
-                                    fontStyle: "bold",
-                                    fontSize: 16
-                                }
-                            }]
+                            }, 
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    gridLines: {
+                                        display: false,
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                    gridLines: {
+                                        display: false,
+                                    },
+                                    scaleLabel: {
+                                        display: true, 
+                                        labelString: "Positive cases", 
+                                        fontColor: "rgb(19, 63, 46)",
+                                        fontStyle: "bold",
+                                        fontSize: 16
+                                    }
+                                }]
+                            }
                         }
+                    });
+                    
+                    //Symptomatic vs Asymptomatic Cases
+                    var studentNewCases = $('#symptVsAsympt');
+                    var tbody = studentNewCases.find('.chart-data-table table tbody');
+                    var data = dataSource.symptVsAsympt;
+                    for(var i=0; i<data.dates.length; i++) {
+                        var row = '<tr>';
+                        row += '<th scope="row">'+data.dates[i]+'</th>';
+                        row += '<td>'+data.symptCases[i].toLocaleString()+'</td>';
+                        row += '<td>'+data.asymptCases[i].toLocaleString()+'</td>';
+                        row += '</tr>';
+                        tbody.append(row);
                     }
+                    var mixedChart = new Chart(studentNewCases.find('.chart-container canvas'), {
+                    type: 'bar',
+                    data: {
+                            datasets: [{
+                                type: 'bar',
+                                label: 'Symptomatic',
+                                data: dataSource.symptVsAsympt.symptCases,
+                                backgroundColor: 'rgb(191, 134, 32)'
+                            },{
+                                type: 'bar',
+                                label: 'Asymptomatic',
+                                data: dataSource.symptVsAsympt.asymptCases,
+                                backgroundColor: 'rgb(173, 198, 187)'
+                            }],
+                            labels: dataSource.symptVsAsympt.dates
+                    },
+                    options: {
+                            maintainAspectRatio: false,
+                            tooltips: {
+                            mode: 'index',
+                            position: 'nearest'
+                        },
+                        legend: {
+                            labels: {
+                                padding: 15
+                            }
+                        }, 
+                        scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    gridLines: {
+                                        display: false,
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                    gridLines: {
+                                        display: false,
+                                    },
+                                    scaleLabel: {
+                                        display: true, 
+                                        labelString: "Positive cases", 
+                                        fontColor: "rgb(19, 63, 46)",
+                                        fontStyle: "bold",
+                                        fontSize: 16
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
+                    //14-day Rolling Percentage of Positive Cases Among Tests
+                    var rollingPosCases = $('#rollingPosCases');
+                    var tbody = rollingPosCases.find('.chart-data-table table tbody');
+                    var data = dataSource.rollingPosCases;
+                    for(var i=0; i<data.dates.length; i++) {
+                        var row = '<tr>';
+                        row += '<th scope="row">'+data.dates[i]+'</th>';
+                        row += '<td>'+data.students[i].toFixed(3).toLocaleString()+'</td>';
+                        row += '<td>'+data.employees[i].toFixed(3).toLocaleString()+'</td>';
+                        row += '</tr>';
+                        tbody.append(row);
+                    }
+                    var mixedChart = new Chart(rollingPosCases.find('.chart-container canvas'), {
+                        type: 'line',
+                        data: {
+                                datasets: [{
+                                    type: 'line',
+                                    label: 'Students',
+                                    data: dataSource.rollingPosCases.students && dataSource.rollingPosCases.students.map((dataPt) => dataPt.toFixed(3)),
+                                    fill: false,
+                                    backgroundColor: 'rgb(191, 134, 32)',
+                                    borderColor: 'rgb(191, 134, 32)',
+                                    borderWidth: 2,
+                                    pointBorderWidth: 0.5
+                                },
+                                {
+                                    type: 'line',
+                                    label: 'Campus Employees',
+                                    data: dataSource.rollingPosCases.employees && dataSource.rollingPosCases.employees.map((dataPt) => dataPt.toFixed(3)),
+                                    fill: false,
+                                    backgroundColor: 'rgb(173, 198, 187)',
+                                    borderColor: 'rgb(173, 198, 187)',
+                                    borderWidth: 2,
+                                    pointBorderWidth: 0.5
+                                }],
+                                labels: dataSource.rollingPosCases.dates
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            tooltips: {
+                                mode: 'index',
+                                position: 'nearest'
+                            },
+                            legend: {
+                                labels: {
+                                    padding: 15
+                                }
+                            }, 
+                            scales: {
+                                xAxes: [{
+                                    gridLines: {
+                                        display: false,
+                                    }
+                                }],
+                                yAxes: [{
+                                    gridLines: {
+                                        display: false,
+                                    },
+                                    scaleLabel: {
+                                        display: true, 
+                                        labelString: "Percentage of positive tests", 
+                                        fontColor: "rgb(19, 63, 46)",
+                                        fontStyle: "bold",
+                                        fontSize: 16
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
+                    $(".toggle-data-table").click(function(e) {
+                        e.preventDefault()
+                        console.log(e);
+                        console.log($(this));
+
+                        var table = $(this).parent().siblings(".chart-data-table");
+                        console.log("table",table)
+                        table.toggle();
+                    });
                 });
             })();
         </script>
