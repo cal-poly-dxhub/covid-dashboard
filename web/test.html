@@ -88,7 +88,7 @@
                                 <th scope="col">Off-Campus</th>
                             </tr>
                             <tr>
-                                <th scope="row">Total Since<br><b id="tp_sinceDate">--</b></th>
+                                <th scope="row">Total Since<br><span id="tp_sinceDate">--</span></th>
                                 <td class="bold-num" id="tp_oncampus">--</td>
                                 <td class="bold-num" id="tp_offcampus">--</td>
                             </tr>
@@ -567,13 +567,8 @@
                     });
 
                     $(".toggle-data-table").click(function(e) {
-                        e.preventDefault()
-                        console.log(e);
-                        console.log($(this));
-
-                        var table = $(this).parent().siblings(".chart-data-table");
-                        console.log("table",table)
-                        table.toggle();
+                        e.preventDefault();
+                        $(this).parent().siblings(".chart-data-table").toggle();
                     });
                 });
             })();
