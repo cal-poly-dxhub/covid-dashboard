@@ -33,7 +33,6 @@
             }
             .chart-container {
                 min-height: 400px;
-                width: 100%;
                 position: relative;
                 margin-right: -15px;
                 margin-left: -15px;
@@ -69,10 +68,10 @@
             <div class="row" style="margin-bottom: 15px; margin-top: 10px; background-color: rgb(255, 254, 250);">
                 <div class="col">
                     <p>
-                        <b id="updateDateTime" style="font-size: 16px; font-weight: 600; color: #666;">--</b><br>
-                        Data updated Monday through Friday. Numbers reflect data from previous weekday.
-                            <br>*Includes testing through Cal Poly Campus Health and Wellbeing and the university's ongoing testing program.
-                            <br>Download the data <a href="https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json">here</a>.
+                        <span id="updateDateTime" style="font-size: 16px; font-weight: 600; color: #666;">--</span><br />
+                        Data updated Monday through Friday. Numbers reflect data from previous weekday.<br />
+                        *Includes testing through Cal Poly Campus Health and Wellbeing and the university's ongoing testing program.<br />
+                        <a ihref="https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json">Download the data</a>
                     </p>
                 </div>
             </div>
@@ -140,7 +139,7 @@
                     </div>
                 </div>
                 <div class="col-sm-5 space-after">
-                    <h2>Isolation/Quarantine Beds Available</h2>
+                    <h2>Isolation/Quarantine Beds</h2>
                     <div class="row green">
                         <div class="col">
                             <span class="bold-num" id="iso_beds_occu">0</span><br>Beds Occupied
