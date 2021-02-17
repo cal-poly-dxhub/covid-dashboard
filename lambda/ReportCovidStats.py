@@ -11,13 +11,15 @@ logger = utility.logger
 
 BUCKET = "coviddashboard.calpoly.io"
 
-#post test version if the lambda function being invoked is not a published version
-KEY = "stats-test.json" if lambda_version == "$LATEST" else "stats.json"
-
 def lambda_handler(event, context):
     logger.info('event: {}'.format(event))
+    body = json.loads(event)
+    show_history = body.get('historical')
 
-    statistics = generate_available_stats()
+    #post test version if the lambda function being invoked is not a published version
+    KEY = "stats.json" if lambda_version != "$LATEST" else "stats-history.json" if show_history else "stats-test.json"
+
+    statistics = generate_available_stats(show_history)
 
     stat_data = json.dumps(statistics).encode('utf-8')
 

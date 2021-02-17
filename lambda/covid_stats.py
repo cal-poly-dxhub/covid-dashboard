@@ -1,15 +1,15 @@
 import pytz
 import utility
+from dateutil.relativedelta import relativedelta
 from datetime import datetime, timedelta
 
 logger = utility.logger
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
-DEFAULT_CUTOFF_DATE = "2020-09-14" #start of Fall Quarter 2020
 
-def generate_available_stats():
-    start_date = get_start_date()
+def generate_available_stats(full_history = False):
+    start_date = get_start_date() if full_history else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(months=3), DATE_FORMAT)
 
     statistics = {
         #current datetime in PST timestamp of statistics
@@ -19,7 +19,7 @@ def generate_available_stats():
         "startDate": start_date,
 
         #positive student cases, including positive student cases yesterday
-        "totalPositive": get_total_pos_student(),
+        "totalPositive": get_total_pos_student(start_date),
 
         #current count of iso rooms available and occupied
         "isoRoomsAvailable": get_room_availability(),
@@ -31,19 +31,19 @@ def generate_available_stats():
         "testsSinceStart": get_tests_since(start_date),
 
         #statistics including pos tests, total tests, and daily rolling 7-day % of pos tests over all tests administered
-        "dailyTestPos": get_daily_pos_tests(),
+        "dailyTestPos": get_daily_pos_tests(start_date),
 
         #daily count of positive student cases
-        "studentNewCases": get_pos_student_daily(),
+        "studentNewCases": get_pos_student_daily(start_date),
 
         #daily count of symptomatic/asymptomatic positive tests
-        "symptVsAsympt": get_daily_sympt_asympt(),
+        "symptVsAsympt": get_daily_sympt_asympt(start_date),
 
         #current count of self-quarantine(s)/quarantinue(s)-in-place
         "quarantine": get_quarantine_count(),
 
         #daily rolling 14-day % of positive cases over all tests administered
-        "rollingPosCases": get_rolling_pos()
+        "rollingPosCases": get_rolling_pos(start_date)
     }
     return statistics
 
