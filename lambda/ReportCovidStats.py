@@ -13,24 +13,29 @@ BUCKET = "coviddashboard.calpoly.io"
 
 def lambda_handler(event, context):
     logger.info('event: {}'.format(event))
-    body = json.loads(event)
-    show_history = body.get('historical')
 
-    #post test version if the lambda function being invoked is not a published version
-    KEY = "stats.json" if lambda_version != "$LATEST" else "stats-history.json" if show_history else "stats-test.json"
-
-    statistics = generate_available_stats(show_history)
-
-    stat_data = json.dumps(statistics).encode('utf-8')
+    recent_stats = generate_available_stats(historical=False)
+    historical_stats = generate_available_stats(historical=True)
 
     try:
-        response = s3.put_object(
-            Bucket=BUCKET,
-            Key=KEY,
-            Body=stat_data
-        )
-        logger.info("s3 put_object response: {}".format(response))
+        KEY = "stats-test.json" if lambda_version == "$LATEST" else "stats.json"
+        post_stats(KEY, recent_stats)
+
+        KEY = "stats-history-test.json" if lambda_version == "$LATEST" else "stats-history.json"
+        post_stats(KEY, historical_stats)
     except:
         logger.error("Could not post statistics to s3")
     finally:
         return {}
+
+
+def post_stats(key, stats):
+    stat_data = json.dumps(stats).encode('utf-8')
+
+    response = s3.put_object(
+            Bucket=BUCKET,
+            Key=key,
+            Body=stat_data
+        )
+        logger.info("s3 put_object response: {}".format(response))
+    return response

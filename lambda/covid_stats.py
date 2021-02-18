@@ -203,8 +203,8 @@ def get_tests_since(since_date):
 
 def get_daily_pos_tests(since_date = None):
     #definitions
-    positive = "Result = 'Detected'"
-    acceptable_test = "Result = 'Detected' OR Result = 'Not-Detected' OR Result = 'Not Detected' OR Result = 'Not Detected in Pooled Specimen'"
+    positive_test = "Result = 'Detected'"
+    valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
 
     '''
         Test_Date   |   positiveTests   |   dailyTests
@@ -214,14 +214,15 @@ def get_daily_pos_tests(since_date = None):
     '''
     daily_test_pos_stmt = """  SELECT  Test_Date,
                                         COUNT(CASE WHEN {0} THEN 1 ELSE NULL END) AS positiveTests,
-                                        COUNT(CASE WHEN {1} THEN 1 ELSE NULL END) AS dailyTests
+                                        COUNT(CASE WHEN {1} THEN 1 ELSE NULL END) AS validTests,
+                                        COUNT(*) AS performedTests
                                 FROM Tests
                                 {2}
                                 GROUP BY Test_Date
-                                ORDER BY Test_Date ASC;""".format(positive, acceptable_test, "WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
+                                ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
     daily_test_pos = {
         "positiveTests": None,
-        "dailyTests": None, 
+        "performedTests": None,
         "avgPos7Day": None,
         "dates": None
     }
@@ -238,14 +239,16 @@ def get_daily_pos_tests(since_date = None):
             #creates a complete list of dates from start_date to today PST
             daily_test_pos['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
             
-            #scale 'dailyTests' and 'positiveTests' to the size of 'dates' by filling in gaps with 0s
-            daily_test_pos['dailyTests'] = [result['dailyTests'].get(date) or 0 for date in daily_test_pos['dates']]
+            #scale validTests, 'performedTests' and 'positiveTests' to the size of 'dates' by filling in gaps with 0s
+            validTests = [result['validTests'].get(date) or 0 for date in daily_test_pos['dates']]
+            
+            daily_test_pos['performedTests'] = [result['performedTests'].get(date) or 0 for date in daily_test_pos['dates']]
             daily_test_pos['positiveTests'] = [result['positiveTests'].get(date) or 0 for date in daily_test_pos['dates']]
 
             daily_test_pos['avgPos7Day'] = utility.get_rolling_average( daily_test_pos['dates'],
                                                                 7,
                                                                 daily_test_pos['positiveTests'],
-                                                                daily_test_pos['dailyTests'] )
+                                                                validTests )
         except Exception as e:
             logger.error("daily tests rolling pos average error: {}".format(str(e)))
             #logger.error("unable to generate map object from response and format: {}".format(response))
