@@ -37,5 +37,5 @@ def post_stats(key, stats):
             Key=key,
             Body=stat_data
         )
-        logger.info("s3 put_object response: {}".format(response))
+    logger.info("s3 put_object response: {}".format(response))
     return response

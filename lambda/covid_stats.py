@@ -8,8 +8,8 @@ logger = utility.logger
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
 
-def generate_available_stats(full_history = False):
-    start_date = get_start_date() if full_history else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(months=3), DATE_FORMAT)
+def generate_available_stats(historical):
+    start_date = get_first_date() if historical else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(months=3), DATE_FORMAT)
 
     statistics = {
         #current datetime in PST timestamp of statistics
@@ -52,7 +52,7 @@ def get_current_datetime():
     now = datetime.now(tz=pytz.timezone('US/Pacific'))
     return datetime.strftime(now, "{0} {1}".format(DATE_FORMAT, TIME_FORMAT))
 
-def get_start_date():
+def get_first_date():
     earliest_date_stmt = "SELECT MIN(Test_Date) AS Test_Date FROM Tests;"
 
     response = utility.get_response(earliest_date_stmt)
@@ -241,7 +241,7 @@ def get_daily_pos_tests(since_date = None):
             
             #scale validTests, 'performedTests' and 'positiveTests' to the size of 'dates' by filling in gaps with 0s
             validTests = [result['validTests'].get(date) or 0 for date in daily_test_pos['dates']]
-            
+
             daily_test_pos['performedTests'] = [result['performedTests'].get(date) or 0 for date in daily_test_pos['dates']]
             daily_test_pos['positiveTests'] = [result['positiveTests'].get(date) or 0 for date in daily_test_pos['dates']]
 
