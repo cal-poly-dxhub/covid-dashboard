@@ -185,7 +185,7 @@
                                         <th scope="col">Date</th>
                                         <th scope="col">7-day Avg Positivity</th>
                                         <th scope="col">Positive Tests</th>
-                                        <th scope="col">Daily Tests</th>
+                                        <th scope="col">Tests Performed</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -274,11 +274,11 @@
         <script>
             async function renderStats(animationDuration) {
                 if(window.location.hash == "#history") {
-                    var url = "https://coviddashboard.calpoly.io/stats-history.json";
+                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-history-test.json";
                     $('#history-toggle').attr('data-link', '#').attr('value','Hide historical data');
                 }
                 else {
-                    var url = "https://coviddashboard.calpoly.io/stats-test.json";
+                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json";
                     $('#history-toggle').attr('data-link', '#history').attr('value','Show historical data');
                 }
 
@@ -322,13 +322,13 @@
                     row += '<th scope="row">'+data.dates[i]+'</th>';
                     row += '<td>'+data.avgPos7Day[i].toFixed(3).toLocaleString()+'</td>';
                     row += '<td>'+data.positiveTests[i].toLocaleString()+'</td>';
-                    row += '<td>'+data.dailyTests[i].toLocaleString()+'</td>';
+                    row += '<td>'+data.performedTests[i].toLocaleString()+'</td>';
                     row += '</tr>';
                     tbody.append(row);
                 }
                 charts.dailyTestPosChart.data.datasets[0].data = data.avgPos7Day && data.avgPos7Day.map((dataPt) => dataPt.toFixed(3));
                 charts.dailyTestPosChart.data.datasets[1].data = data.positiveTests;
-                charts.dailyTestPosChart.data.datasets[2].data = data.dailyTests;
+                charts.dailyTestPosChart.data.datasets[2].data = data.performedTests;
                 charts.dailyTestPosChart.data.labels = data.dates;
                 charts.dailyTestPosChart.update(animationDuration);
                 
@@ -420,7 +420,7 @@
                             {
                                 type: 'bar',
                                 yAxisID: 'A',
-                                label: 'Daily Tests',
+                                label: 'Tests Performed',
                                 backgroundColor: graphColors[1]
                             }
                         ]
