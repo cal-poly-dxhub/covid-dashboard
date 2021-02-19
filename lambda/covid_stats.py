@@ -8,6 +8,8 @@ logger = utility.logger
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
 
+DEFAULT_CUTOFF_DATE = "2020-09-14" #Start of Fall 2020
+
 def generate_available_stats(historical):
     start_date = get_first_date() if historical else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(months=3), DATE_FORMAT)
 
@@ -51,6 +53,7 @@ def generate_available_stats(historical):
 def get_current_datetime():
     now = datetime.now(tz=pytz.timezone('US/Pacific'))
     return datetime.strftime(now, "{0} {1}".format(DATE_FORMAT, TIME_FORMAT))
+
 
 def get_first_date():
     earliest_date_stmt = "SELECT MIN(Test_Date) AS Test_Date FROM Tests;"
@@ -334,7 +337,7 @@ def get_daily_sympt_asympt(since_date = None):
             
             #scale 'symptCases' and 'asymptCases' to the size of 'dates' by filling in gaps with 0s
             sympt_vs_asympt['symptCases'] = [result['symptCases'].get(date) or 0 for date in sympt_vs_asympt['dates']]
-            sympt_vs_asympt['asymptCases'] = [result['symptCases'].get(date) or 0 for date in sympt_vs_asympt['dates']]
+            sympt_vs_asympt['asymptCases'] = [result['asymptCases'].get(date) or 0 for date in sympt_vs_asympt['dates']]
         except:
             logger.error("unable to generate map object from response and format: {}".format(response))
     else:
@@ -382,6 +385,10 @@ def get_quarantine_count():
 
 
 def get_rolling_pos(since_date = None):
+    #definitions
+    positive_test = "Result = 'Detected'"
+    valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
+    
     '''
         Test_Date   |   posStudents     |   students    | posEmployees  | employees
         2021-01-04  |       3           |       11      |       1       |   5
@@ -389,14 +396,14 @@ def get_rolling_pos(since_date = None):
             ...     |       ...         |       ...     |       ...     |   ...
     '''
     rolling_pos_stmt = """  SELECT 	Test_Date,
-                                    COUNT(CASE WHEN `Type` = 'Student' AND Result = 'Detected' THEN 1 ELSE NULL END) AS posStudents,
-                                    COUNT(CASE WHEN `Type` = 'Student' THEN 1 ELSE NULL END) AS students,
-                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') AND Result = 'Detected' THEN 1 ELSE NULL END) AS posEmployees,
-                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') THEN 1 ELSE NULL END) AS employees
+                                    COUNT(CASE WHEN `Type` = 'Student' AND {0} THEN 1 ELSE NULL END) AS posStudents,
+                                    COUNT(CASE WHEN `Type` = 'Student' AND {1} THEN 1 ELSE NULL END) AS students,
+                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') AND {0} THEN 1 ELSE NULL END) AS posEmployees,
+                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') AND {1} THEN 1 ELSE NULL END) AS employees
                             FROM Tests
-                            {}
+                            {2}
                             GROUP BY Test_Date
-                            ORDER BY Test_Date ASC;""".format("WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
+                            ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
     rolling_pos_cases = {
         "dates": None,
         "students": None,
