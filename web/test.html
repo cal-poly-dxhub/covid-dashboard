@@ -274,11 +274,11 @@
         <script>
             async function renderStats(animationDuration) {
                 if(window.location.hash == "#history") {
-                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-history-test.json";
+                    var url = "https://coviddashboard.calpoly.io/stats-history-test.json";
                     $('#history-toggle').attr('data-link', '#').attr('value','Hide historical data');
                 }
                 else {
-                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json";
+                    var url = "https://coviddashboard.calpoly.io/stats-test.json";
                     $('#history-toggle').attr('data-link', '#history').attr('value','Show historical data');
                 }
 
