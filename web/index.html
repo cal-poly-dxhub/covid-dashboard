@@ -272,6 +272,15 @@
             </div>
         </div>
         <script>
+            const formatters = {
+                percentage: function(val) {
+                    return (val*100).toFixed(2)+'%'
+                },
+                int: function(val) {
+                    return (val*1).toLocaleString()
+                }
+            }
+
             async function renderStats(animationDuration) {
                 if(window.location.hash == "#history") {
                     var url = "https://coviddashboard.calpoly.io/stats-history.json";
@@ -320,13 +329,13 @@
                 for(var i=0; i<data.dates.length; i++) {
                     var row = '<tr>';
                     row += '<th scope="row">'+data.dates[i]+'</th>';
-                    row += '<td>'+data.avgPos7Day[i].toFixed(3).toLocaleString()+'</td>';
+                    row += '<td>'+formatters.percentage(data.avgPos7Day[i])+'</td>';
                     row += '<td>'+data.positiveTests[i].toLocaleString()+'</td>';
                     row += '<td>'+data.performedTests[i].toLocaleString()+'</td>';
                     row += '</tr>';
                     tbody.append(row);
                 }
-                charts.dailyTestPosChart.data.datasets[0].data = data.avgPos7Day && data.avgPos7Day.map((dataPt) => dataPt.toFixed(3));
+                charts.dailyTestPosChart.data.datasets[0].data = data.avgPos7Day;
                 charts.dailyTestPosChart.data.datasets[1].data = data.positiveTests;
                 charts.dailyTestPosChart.data.datasets[2].data = data.performedTests;
                 charts.dailyTestPosChart.data.labels = data.dates;
@@ -370,13 +379,13 @@
                 for(var i=0; i<data.dates.length; i++) {
                     var row = '<tr>';
                     row += '<th scope="row">'+data.dates[i]+'</th>';
-                    row += '<td>'+data.students[i].toFixed(3).toLocaleString()+'</td>';
-                    row += '<td>'+data.employees[i].toFixed(3).toLocaleString()+'</td>';
+                    row += '<td>'+formatters.percentage(data.students[i])+'</td>';
+                    row += '<td>'+formatters.percentage(data.employees[i])+'</td>';
                     row += '</tr>';
                     tbody.append(row);
                 }
-                charts.rollingPosCasesChart.data.datasets[0].data = data.students && data.students.map((dataPt) => dataPt.toFixed(3));
-                charts.rollingPosCasesChart.data.datasets[1].data = data.employees && data.employees.map((dataPt) => dataPt.toFixed(3));
+                charts.rollingPosCasesChart.data.datasets[0].data = data.students;
+                charts.rollingPosCasesChart.data.datasets[1].data = data.employees;
                 charts.rollingPosCasesChart.data.labels = data.dates;
                 charts.rollingPosCasesChart.update(animationDuration);
             }
@@ -392,6 +401,21 @@
                 Chart.defaults.scale.scaleLabel.fontStyle = "bold";
                 Chart.defaults.scale.scaleLabel.fontSize = 16;
                 Chart.defaults.bar.scales.xAxes[0].stacked = true;
+                Chart.defaults.global.tooltips.callbacks.label = function(tooltipItem, data) {
+                    var dataset = data.datasets[tooltipItem.datasetIndex];
+                    var label = dataset.label || '';
+
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (dataset.formatter && dataset.formatter instanceof Function) {
+                        label += dataset.formatter(tooltipItem.value);
+                    }
+                    else {
+                        label += tooltipItem.value
+                    }
+                    return label;
+                }
 
                 var graphColors = ['rgb(191, 134, 32)', 'rgb(173, 198, 187)', 'rgb(19, 63, 46)'];
 
@@ -408,20 +432,22 @@
                                 backgroundColor: graphColors[2],
                                 borderColor: graphColors[2],
                                 borderWidth: 2,
-                                pointBorderWidth: 0.5
-
+                                pointBorderWidth: 0.5,
+                                formatter: formatters.percentage
                             },
                             {
                                 type: 'bar',
                                 yAxisID: 'A',
                                 label: 'Positive Tests',
-                                backgroundColor: graphColors[0]
+                                backgroundColor: graphColors[0],
+                                formatter: formatters.int
                             },
                             {
                                 type: 'bar',
                                 yAxisID: 'A',
                                 label: 'Tests Performed',
-                                backgroundColor: graphColors[1]
+                                backgroundColor: graphColors[1],
+                                formatter: formatters.int
                             }
                         ]
                     },
@@ -443,6 +469,11 @@
                                     scaleLabel: {
                                         display: true,
                                         labelString: "Percentage of positive tests"
+                                    },
+                                    ticks: {
+                                        callback: function(value, index, values) {
+                                            return formatters.percentage(value);
+                                        }
                                     }
                                 }
                             ]
@@ -456,12 +487,14 @@
                             {
                                 type: 'bar',
                                 label: 'On-Campus Students',
-                                backgroundColor: graphColors[0]
+                                backgroundColor: graphColors[0],
+                                formatter: formatters.int
                             },
                             {
                                 type: 'bar',
                                 label: 'Off-Campus Students',
-                                backgroundColor: graphColors[1]
+                                backgroundColor: graphColors[1],
+                                formatter: formatters.int
                             }
                         ]
                     },
@@ -486,12 +519,14 @@
                             {
                                 type: 'bar',
                                 label: 'Symptomatic',
-                                backgroundColor: graphColors[0]
+                                backgroundColor: graphColors[0],
+                                formatter: formatters.int
                             },
                             {
                                 type: 'bar',
                                 label: 'Asymptomatic',
-                                backgroundColor: graphColors[1]
+                                backgroundColor: graphColors[1],
+                                formatter: formatters.int
                             }
                         ]
                     },
@@ -520,7 +555,8 @@
                                 backgroundColor: graphColors[0],
                                 borderColor: graphColors[0],
                                 borderWidth: 2,
-                                pointBorderWidth: 0.5
+                                pointBorderWidth: 0.5,
+                                formatter: formatters.percentage
                             },
                             {
                                 type: 'line',
@@ -529,7 +565,8 @@
                                 backgroundColor: graphColors[1],
                                 borderColor: graphColors[1],
                                 borderWidth: 2,
-                                pointBorderWidth: 0.5
+                                pointBorderWidth: 0.5,
+                                formatter: formatters.percentage
                             }
                         ]
                     },
@@ -540,6 +577,11 @@
                                     scaleLabel: {
                                         display: true,
                                         labelString: "Percentage of positive tests"
+                                    },
+                                    ticks: {
+                                        callback: function(value, index, values) {
+                                            return formatters.percentage(value);
+                                        }
                                     }
                                 }
                             ]
