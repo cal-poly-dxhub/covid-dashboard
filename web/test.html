@@ -246,6 +246,7 @@
                 </div>
             </div>
             <!--Graph: 14-day Rolling-->
+            <!--
             <div class="row space-after">
                 <div class="col">
                     <h1>14-day Rolling Percentage of Positive Cases Among Tests</h1>
@@ -269,6 +270,7 @@
                         </div>
                     </div>
                 </div>
+            -->
             </div>
         </div>
         <script>
@@ -374,6 +376,7 @@
                 charts.symptVsAsymptChart.update(animationDuration);
                 
                 //14-day Rolling Percentage of Positive Cases Among Tests
+                /*
                 var tbody = $('#rollingPosCases .chart-data-table table tbody').empty();
                 var data = dataSource.rollingPosCases;
                 for(var i=0; i<data.dates.length; i++) {
@@ -388,6 +391,7 @@
                 charts.rollingPosCasesChart.data.datasets[1].data = data.employees;
                 charts.rollingPosCasesChart.data.labels = data.dates;
                 charts.rollingPosCasesChart.update(animationDuration);
+                */
             }
 
             $(function() {
@@ -544,6 +548,7 @@
                         }
                     }
                 });
+                /*
                 var rollingPosCasesChart = new Chart($('#rollingPosCases .chart-container canvas'), {
                     type: 'line',
                     data: {
@@ -588,8 +593,9 @@
                         }
                     }
                 });
+                */
 
-                window.charts = {dailyTestPosChart, studentNewCasesChart, symptVsAsymptChart, rollingPosCasesChart};
+                window.charts = {dailyTestPosChart, studentNewCasesChart, symptVsAsymptChart/*, rollingPosCasesChart*/};
 
                 renderStats(0);
                 

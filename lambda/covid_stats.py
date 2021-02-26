@@ -42,10 +42,10 @@ def generate_available_stats(historical):
         "symptVsAsympt": get_daily_sympt_asympt(start_date),
 
         #current count of self-quarantine(s)/quarantinue(s)-in-place
-        "quarantine": get_quarantine_count(),
+        "quarantine": get_quarantine_count()#,
 
         #daily rolling 14-day % of positive cases over all tests administered
-        "rollingPosCases": get_rolling_pos(start_date)
+        #"rollingPosCases": get_rolling_pos(start_date)
     }
     return statistics
 
