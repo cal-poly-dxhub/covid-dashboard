@@ -208,6 +208,7 @@ def get_daily_pos_tests(since_date = None):
     #definitions
     positive_test = "Result = 'Detected'"
     valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
+    rolling_avg = 7 #days
 
     '''
         Test_Date   |   positiveTests   |   dailyTests
@@ -222,7 +223,7 @@ def get_daily_pos_tests(since_date = None):
                                 FROM Tests
                                 {2}
                                 GROUP BY Test_Date
-                                ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
+                                ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= DATE_SUB('{0}', INTERVAL {1} DAY)".format(since_date, str(rolling_avg)) if since_date else "")
     daily_test_pos = {
         "positiveTests": None,
         "performedTests": None,
@@ -238,9 +239,12 @@ def get_daily_pos_tests(since_date = None):
 
             start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
             start_date = datetime.strptime(start_date, DATE_FORMAT)
+
+            #include historical data for rolling average to remain accurate
+            start_date -= timedelta(days=rolling_avg)
             
             #creates a complete list of dates from start_date to today PST
-            daily_test_pos['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
+            daily_test_pos['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
             
             #scale validTests, 'performedTests' and 'positiveTests' to the size of 'dates' by filling in gaps with 0s
             validTests = [result['validTests'].get(date) or 0 for date in daily_test_pos['dates']]
@@ -249,14 +253,18 @@ def get_daily_pos_tests(since_date = None):
             daily_test_pos['positiveTests'] = [result['positiveTests'].get(date) or 0 for date in daily_test_pos['dates']]
 
             daily_test_pos['avgPos7Day'] = utility.get_rolling_average( daily_test_pos['dates'],
-                                                                7,
+                                                                rolling_avg,
                                                                 daily_test_pos['positiveTests'],
                                                                 validTests )
+            #disclude historical data before start_date
+            for key in daily_test_pos.keys():
+                daily_test_pos[key] = daily_test_pos[key][rolling_avg:]
         except Exception as e:
             logger.error("daily tests rolling pos average error: {}".format(str(e)))
             #logger.error("unable to generate map object from response and format: {}".format(response))
     else:
         logger.error("No records info returned: DAILY TESTS")
+
     return daily_test_pos
 
 
@@ -292,7 +300,7 @@ def get_pos_student_daily(since_date = None):
             start_date = datetime.strptime(start_date, DATE_FORMAT)
 
             #creates a complete list of dates from start_date to today PST
-            student_new_cases['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
+            student_new_cases['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
             
             #scale 'onCampusCases' and 'offCampusCases' to the size of 'dates' by filling in gaps with 0s
             student_new_cases['onCampusCases'] = [result['onCampusCases'].get(date) or 0 for date in student_new_cases['dates']]
@@ -333,7 +341,7 @@ def get_daily_sympt_asympt(since_date = None):
             start_date = datetime.strptime(start_date, DATE_FORMAT)
 
             #creates a complete list of dates from start_date to today PST
-            sympt_vs_asympt['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
+            sympt_vs_asympt['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
             
             #scale 'symptCases' and 'asymptCases' to the size of 'dates' by filling in gaps with 0s
             sympt_vs_asympt['symptCases'] = [result['symptCases'].get(date) or 0 for date in sympt_vs_asympt['dates']]
@@ -420,7 +428,7 @@ def get_rolling_pos(since_date = None):
             start_date = datetime.strptime(start_date, DATE_FORMAT)
 
             #creates a complete list of dates from start_date to today PST
-            rolling_pos_cases['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
+            rolling_pos_cases['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
             
             #scale below lists to the size of 'dates' by filling in gaps with 0s
             total_students = [result['students'].get(date) or 0 for date in rolling_pos_cases['dates']]
