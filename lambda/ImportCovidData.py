@@ -3,6 +3,7 @@ import boto3
 import logging
 import datetime
 import db_config
+from decimal import Decimal
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -118,7 +119,37 @@ def lambda_handler(event, context):
         logger.info("amazon aurora `test_data` EXECUTE_STATEMENT response: {}".format(response))
         retval['body'] = json.dumps(response)
 
+    elif action == "compliance":
+        compliance_table = dynamodb.Table('compliance')
+        '''
+            input data is expected to be of the form:
+                {
+                    "date": ~, (YYYY-MM-DD)
+                    "totalRequired": ~,
+                    "testedInLast3Days": ~,
+                    "testedInLast6Days": ~,
+                    ...
+                }
+        '''
+        input_data['complianceDateTimeUTC'] = str(datetime.datetime.utcnow())
+        
+        try:
+            response = compliance_table.put_item(
+                Item=input_data,
+                ReturnValues="ALL_OLD"
+            )
+        except:
+            return error_response(retval, {"message": "unable to insert data for `compliance`."}, 500)
+        
+        logger.info("dynamodb `compliance` PUT_ITEM response: {}".format(response))
+        retval['body'] = json.dumps(response, default=json_default)
+
     return retval
+
+def json_default(obj):
+    if isinstance(obj, Decimal):
+        return str(obj)
+    raise TypeError("Object of type '%s' is not JSON serializable" % type(obj).__name__)
 
 def error_response(retval, body, statusCode):
     logger.error("status code - {0}: {1}".format(statusCode, body))
