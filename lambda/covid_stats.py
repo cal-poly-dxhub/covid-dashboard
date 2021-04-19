@@ -42,7 +42,10 @@ def generate_available_stats(historical):
         "symptVsAsympt": get_daily_sympt_asympt(start_date),
 
         #current count of self-quarantine(s)/quarantinue(s)-in-place
-        "quarantine": get_quarantine_count()#,
+        "quarantine": get_quarantine_count(),
+        
+        #daily count of student compliance for on-campus testing requirements
+        "compliance": get_testing_compliance(start_date)#,
 
         #daily rolling 14-day % of positive cases over all tests administered
         #"rollingPosCases": get_rolling_pos(start_date)
@@ -390,6 +393,34 @@ def get_quarantine_count():
     quarantine['isolation'] = isolation
 
     return quarantine
+
+
+def get_testing_compliance(since_date = None):
+    compliance = {
+        "dates": None,
+        "testedInLast3Days": None,
+        "testedInLast6Days": None,
+        "totalRequired": None
+    }
+
+    try:
+        table_items = utility.get_table_items('compliance')
+    except:
+        logger.error("compliance table could not be processed.")
+        return compliance
+
+    #clean up the result
+    table_items = sorted(table_items, key=lambda x: x['date'])
+
+    if since_date:
+        table_items = list(filter(lambda x: datetime.strptime(x['date'], DATE_FORMAT) >= datetime.strptime(since_date, DATE_FORMAT), table_items))
+
+    compliance['dates'] = [record['date'] for record in table_items]
+    compliance['testedInLast3Days'] = [int(record['testedInLast3Days']) for record in table_items]
+    compliance['testedInLast6Days'] = [int(record['testedInLast6Days']) for record in table_items]
+    compliance['totalRequired'] = [int(record['totalRequired']) for record in table_items]
+
+    return compliance
 
 
 def get_rolling_pos(since_date = None):
