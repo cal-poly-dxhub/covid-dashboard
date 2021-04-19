@@ -131,15 +131,23 @@ def lambda_handler(event, context):
                     ...
                 }
         '''
-        input_data['complianceDateTimeUTC'] = str(datetime.datetime.utcnow())
+
+        if type(input_data) != list:
+            return error_response(retval, {"message": "request body must be an array of 'compliance' objects"}, 400)
         
-        try:
-            response = compliance_table.put_item(
-                Item=input_data,
-                ReturnValues="ALL_OLD"
-            )
-        except:
-            return error_response(retval, {"message": "unable to insert data for `compliance`."}, 500)
+        response = []
+        for obj in input_data:
+            obj['complianceDateTimeUTC'] = str(datetime.datetime.utcnow())
+            try:
+                result = compliance_table.put_item(
+                    Item=obj,
+                    ReturnValues="ALL_OLD"
+                )
+            except:
+                logger.error("unable to insert into `compliance` table:\n{}".format(obj))
+                result = {"message": "error", "value": obj}
+            finally:
+                response.append(result)
         
         logger.info("dynamodb `compliance` PUT_ITEM response: {}".format(response))
         retval['body'] = json.dumps(response, default=json_default)
