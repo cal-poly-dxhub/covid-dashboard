@@ -23,7 +23,8 @@ def lambda_handler(event, context):
 
         KEY = "stats-history-test.json" if lambda_version == "$LATEST" else "stats-history.json"
         post_stats(KEY, historical_stats)
-    except:
+    except Exception as e:
+        logger.error(str(e))
         logger.error("Could not post statistics to s3")
     finally:
         return {}
