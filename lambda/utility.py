@@ -104,3 +104,7 @@ def get_table_items(table):
     items = response['Items']
 
     return items
+
+
+def safe_division(num, div):
+    return round(num / div, 4) if div != 0 else 0

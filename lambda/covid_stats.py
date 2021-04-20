@@ -410,15 +410,45 @@ def get_testing_compliance(since_date = None):
         return compliance
 
     #clean up the result
-    table_items = sorted(table_items, key=lambda x: x['date'])
+    #table_items = sorted(table_items, key=lambda x: x['date'])
 
     if since_date:
         table_items = list(filter(lambda x: datetime.strptime(x['date'], DATE_FORMAT) >= datetime.strptime(since_date, DATE_FORMAT), table_items))
 
-    compliance['dates'] = [record['date'] for record in table_items]
-    compliance['testedInLast3Days'] = [int(record['testedInLast3Days']) for record in table_items]
-    compliance['testedInLast6Days'] = [int(record['testedInLast6Days']) for record in table_items]
-    compliance['totalRequired'] = [int(record['totalRequired']) for record in table_items]
+    '''
+    CONVERT:
+    [{date, totalRequired, testedInlast3Days, testedInLast6Days}, ...]
+    
+    TO:
+    {
+        "totalRequired": {date1: X, date2: Y,...},
+        "testedInLast3Days": {date1: X, date2: Y,...},
+        "testedInLast6Days": {date1: X, date2: Y,...}
+    }
+    '''
+
+    converted_date_map = {
+        "totalRequired": {},
+        "testedInLast3Days": {},
+        "testedInLast6Days": {}
+    }
+
+    for record in table_items:
+        converted_date_map['totalRequired'][record['date']] = int(record['totalRequired'])
+        converted_date_map['testedInLast3Days'][record['date']] = int(record['testedInLast3Days'])
+        converted_date_map['testedInLast6Days'][record['date']] = int(record['testedInLast6Days'])
+
+    start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
+    start_date = datetime.strptime(start_date, DATE_FORMAT)
+
+    compliance['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
+    
+    compliance['totalRequired'] = [converted_date_map['totalRequired'].get(date) or 0 for date in compliance['dates']]
+    testedInLast3Days = [converted_date_map['testedInLast3Days'].get(date) or 0 for date in compliance['dates']]
+    testedInLast6Days = [converted_date_map['testedInLast6Days'].get(date) or 0 for date in compliance['dates']]
+
+    compliance['testedInLast3Days'] = [utility.safe_division(testedInLast3Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
+    compliance['testedInLast6Days'] = [utility.safe_division(testedInLast6Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
 
     return compliance
 
