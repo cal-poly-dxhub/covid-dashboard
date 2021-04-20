@@ -162,6 +162,23 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-7 space-after">
+                    <!--<h1>Student Testing Summary As Of <span id="tp_testSinceDate">--</span></h1>-->
+                    <h1>Student Testing Summary</h1>
+                    <div class="row green">
+                        <div class="col">
+                            <span class="bold-num" id="compliance_totalRequired">0</span><br>Students Required
+                        </div>
+                        <div class="col">
+                            <span class="bold-num"><span id="compliance_testedLast3">0</span>%</span><br>Tested Within 3 Days
+                        </div>
+                        <div class="col-5">
+                            <span class="bold-num"><span id="compliance_testedLast6">0</span>%</span><br>Tested Within 6 Days
+                        </div>
+                    </div>
+                </div>
                 <div class="col-12 space-after">
                     See below for further information and links regarding university testing programs and isolation/quarantine procedures.
                 </div>
@@ -242,6 +259,32 @@
                     </div>
                 </div>
             </div>
+            <!--Graph: Testing Compliance-->
+            <div class="row space-after">
+                <div class="col">
+                    <h1>Student Testing Compliance</h1>
+                    <div id="compliance">
+                        <div class="chart-container">
+                            <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
+                        </div>
+                        <p><a class="toggle-data-table" href="#">Show/hide chart data table</a></p>
+                        <div class="chart-data-table" style="display: none;">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Tested In Last 3 Days</th>
+                                        <th scope="col">Tested In Last 6 Days</th>
+                                        <th scope="col">Total Required</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!--Graph: 14-day Rolling-->
             <!--
             <div class="row space-after">
@@ -305,6 +348,7 @@
                     document.getElementById('tp7_offcampus').innerHTML = dataSource.totalPositiveLast7.offCampusInSlo.toLocaleString();
 
                     document.getElementById('tp_sinceDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
+                    //document.getElementById('tp_testSinceDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
                     document.getElementById('tp_startDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
 
                     document.getElementById('ttsj4_total').innerHTML = dataSource.testsSinceStart.total.toLocaleString();
@@ -319,6 +363,9 @@
                     document.getElementById('qqip_qInPlace').innerHTML = dataSource.quarantine.quarantineInPlace.toLocaleString();
                     document.getElementById('qqip_isolation').innerHTML = dataSource.quarantine.isolation.toLocaleString();
 
+                    document.getElementById('compliance_totalRequired').innerHTML = dataSource.compliance.totalRequired[dataSource.compliance.totalRequired.length - 1].toLocaleString();
+                    document.getElementById('compliance_testedLast3').innerHTML = (dataSource.compliance.testedInLast3Days[dataSource.compliance.testedInLast3Days.length - 1] * 100).toLocaleString();
+                    document.getElementById('compliance_testedLast6').innerHTML = (dataSource.compliance.testedInLast6Days[dataSource.compliance.testedInLast6Days.length - 1] * 100).toLocaleString();
 
                     //Daily Tests and Positive Cases with 7-Day Avg Positivity Rate
                     var tbody = $('#dailyTestPos .chart-data-table table tbody').empty();
@@ -370,6 +417,23 @@
                     charts.symptVsAsymptChart.data.labels = data.dates;
                     charts.symptVsAsymptChart.update(animationDuration);
                     
+                    //Testing Compliance
+                    var tbody = $('#compliance .chart-data-table table tbody').empty();
+                    var data = dataSource.compliance;
+                    for(var i=0; i<data.dates.length; i++) {
+                        var row = '<tr>';
+                        row += '<th scope="row">'+data.dates[i]+'</th>';
+                        row += '<td>'+formatters.percentage(data.testedInLast3Days[i])+'</td>';
+                        row += '<td>'+formatters.percentage(data.testedInLast6Days[i])+'</td>';
+                        row += '<td>'+data.totalRequired[i].toLocaleString()+'</td>';
+                        row += '</tr>';
+                        tbody.append(row);
+                    }
+                    charts.complianceChart.data.datasets[0].data = data.testedInLast3Days;
+                    charts.complianceChart.data.datasets[1].data = data.testedInLast6Days;
+                    charts.complianceChart.data.labels = data.dates;
+                    charts.complianceChart.update(animationDuration);
+
                     //14-day Rolling Percentage of Positive Cases Among Tests
                     /*
                     var tbody = $('#rollingPosCases .chart-data-table table tbody').empty();
@@ -544,6 +608,43 @@
                         }
                     }
                 });
+                var complianceChart = new Chart($('#compliance .chart-container canvas'), {
+                    type: 'bar',
+                    data: {
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Tested In Last 3 Days',
+                                backgroundColor: graphColors[0],
+                                formatter: formatters.int
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Tested In Last 6 Days',
+                                backgroundColor: graphColors[1],
+                                formatter: formatters.int
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [
+                                {
+                                    stacked: false,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Percentage of required tests"
+                                    },
+                                    ticks: {
+                                        callback: function(value, index, values) {
+                                            return formatters.percentage(value);
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                });
                 /*
                 var rollingPosCasesChart = new Chart($('#rollingPosCases .chart-container canvas'), {
                     type: 'line',
@@ -595,6 +696,7 @@
                     dailyTestPosChart: dailyTestPosChart,
                     studentNewCasesChart: studentNewCasesChart,
                     symptVsAsymptChart: symptVsAsymptChart,
+                    complianceChart: complianceChart,
                     //rollingPosCasesChart:rollingPosCasesChart
                 };
 
