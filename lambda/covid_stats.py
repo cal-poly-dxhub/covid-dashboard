@@ -88,6 +88,7 @@ def get_total_pos_student(since_date = None):
                             FROM Tests
                             WHERE `Type` = 'Student'
                                 AND Result = 'Detected'
+                                AND Test_Date < CONVERT_TZ(NOW(),'+00:00','-8:00')
                                 {}
                             GROUP BY ON_CAMPUS_RESIDENT_FLAG;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
     total_positive = {
@@ -152,6 +153,7 @@ def get_pos_stu_prev_days(days, since_date = None):
                             FROM Tests
                             WHERE `Type` = 'Student'
                                 AND Result = 'Detected'
+                                AND Test_Date < CONVERT_TZ(NOW(),'+00:00','-8:00')
                                 {1}
                             GROUP BY ON_CAMPUS_RESIDENT_FLAG
                             ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(str(days), "AND Test_Date >= '{}'".format(since_date) if since_date else "")
