@@ -88,7 +88,7 @@ def get_total_pos_student(since_date = None):
                             FROM Tests
                             WHERE `Type` = 'Student'
                                 AND Result = 'Detected'
-                                AND Test_Date < CONVERT_TZ(NOW(),'+00:00','-8:00')
+                                AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
                                 {}
                             GROUP BY ON_CAMPUS_RESIDENT_FLAG;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
     total_positive = {
@@ -153,7 +153,7 @@ def get_pos_stu_prev_days(days, since_date = None):
                             FROM Tests
                             WHERE `Type` = 'Student'
                                 AND Result = 'Detected'
-                                AND Test_Date < CONVERT_TZ(NOW(),'+00:00','-8:00')
+                                AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
                                 {1}
                             GROUP BY ON_CAMPUS_RESIDENT_FLAG
                             ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(str(days), "AND Test_Date >= '{}'".format(since_date) if since_date else "")
@@ -450,7 +450,7 @@ def get_testing_compliance(since_date = None):
     testedInLast6Days = [converted_date_map['testedInLast6Days'].get(date) or 0 for date in compliance['dates']]
 
     compliance['testedInLast3Days'] = [utility.safe_division(testedInLast3Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
-    compliance['testedInLast6Days'] = [utility.safe_division(testedInLast6Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
+    compliance['testedInLast6Days'] = [utility.safe_division(testedInLast3Days[i] + testedInLast6Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
 
     return compliance
 
