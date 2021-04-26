@@ -262,7 +262,7 @@
             <!--Graph: Testing Compliance-->
             <div class="row space-after">
                 <div class="col">
-                    <h1>Student Testing Compliance</h1>
+                    <h1>Required Student Testing</h1>
                     <div id="compliance">
                         <div class="chart-container">
                             <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
@@ -325,11 +325,11 @@
 
             function renderStats(animationDuration) {
                 if(window.location.hash == "#history") {
-                    var url = "https://coviddashboard.calpoly.io/stats-history-test.json";
+                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-history-test.json";
                     $('#history-toggle').attr('data-link', '#').attr('value','Hide historical data');
                 }
                 else {
-                    var url = "https://coviddashboard.calpoly.io/stats-test.json";
+                    var url = "https://s3-us-west-2.amazonaws.com/coviddashboard.calpoly.io/stats-test.json";
                     $('#history-toggle').attr('data-link', '#history').attr('value','Show historical data');
                 }
 
