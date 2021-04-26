@@ -412,7 +412,10 @@ def get_testing_compliance(since_date = None):
         return compliance
 
     #clean up the result
-    #table_items = sorted(table_items, key=lambda x: x['date'])
+    table_items = sorted(table_items, key=lambda x: x['date'])
+    
+    #custom cut-off date for smaller dataset
+    first_date = datetime.strptime(table_items[0]['date'], DATE_FORMAT)
 
     if since_date:
         table_items = list(filter(lambda x: datetime.strptime(x['date'], DATE_FORMAT) >= datetime.strptime(since_date, DATE_FORMAT), table_items))
@@ -440,8 +443,13 @@ def get_testing_compliance(since_date = None):
         converted_date_map['testedInLast3Days'][record['date']] = int(record['testedInLast3Days'])
         converted_date_map['testedInLast6Days'][record['date']] = int(record['testedInLast6Days'])
 
-    start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
-    start_date = datetime.strptime(start_date, DATE_FORMAT)
+    global_cutoff_date = since_date if since_date else DEFAULT_CUTOFF_DATE
+    global_cutoff_date = datetime.strptime(global_cutoff_date, DATE_FORMAT)
+
+    start_date = first_date if first_date > global_cutoff_date else global_cutoff_date
+
+    #start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
+    #start_date = datetime.strptime(start_date, DATE_FORMAT)
 
     compliance['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
     
