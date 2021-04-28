@@ -451,7 +451,7 @@ def get_testing_compliance(since_date = None):
     #start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
     #start_date = datetime.strptime(start_date, DATE_FORMAT)
 
-    compliance['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
+    compliance['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days + 1)]
     
     compliance['totalRequired'] = [converted_date_map['totalRequired'].get(date) or 0 for date in compliance['dates']]
     testedInLast3Days = [converted_date_map['testedInLast3Days'].get(date) or 0 for date in compliance['dates']]
