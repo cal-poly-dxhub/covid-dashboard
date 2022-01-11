@@ -45,7 +45,7 @@ def generate_available_stats(historical):
         "quarantine": get_quarantine_count(),
         
         #daily count of student compliance for on-campus testing requirements
-        "compliance": get_testing_compliance(start_date)#,
+        #"compliance": get_testing_compliance(start_date),
 
         #daily rolling 14-day % of positive cases over all tests administered
         #"rollingPosCases": get_rolling_pos(start_date)
