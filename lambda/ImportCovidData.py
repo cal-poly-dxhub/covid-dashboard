@@ -91,8 +91,8 @@ def lambda_handler(event, context):
     elif action == "tests":
         test_table = boto3.client('rds-data')
         insert_test_stmt =  """
-                                INSERT INTO Tests(Result, Test_Date, Result_Date, Source, Reason, Type, ON_CAMPUS_RESIDENT_FLAG, ResponseId)
-                                VALUES(:result, :test_date, :result_date, :source, :reason, :type, :on_campus_resident_flag, :response_id)
+                                INSERT INTO Tests(Result, Test_Date, Result_Date, Source, Reason, Type, ON_CAMPUS_RESIDENT_FLAG, ResponseId, GUID)
+                                VALUES(:result, :test_date, :result_date, :source, :reason, :type, :on_campus_resident_flag, :response_id, :guid)
                             """
         params= [
                     { "name": "result", "value": format_param_value(input_data.get("ED_TD_Result")) },
@@ -102,7 +102,8 @@ def lambda_handler(event, context):
                     { "name": "type", "value": format_param_value(input_data.get("ED_TYPE")) },
                     { "name": "on_campus_resident_flag", "value": format_param_value(input_data.get("ON_CAMPUS_RESIDENT_FLAG")) },
                     { "name": "response_id", "value": format_param_value(input_data.get("ResponseId")) },
-                    { "name": "result_date", "value": format_param_value(input_data.get("ED_TD_Result_Date")) }
+                    { "name": "result_date", "value": format_param_value(input_data.get("ED_TD_Result_Date")) },
+                    { "name": "guid", "value": format_param_value(input_data.get("GUID")) }
         ]
         
         try:

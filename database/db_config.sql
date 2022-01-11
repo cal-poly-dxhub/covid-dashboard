@@ -8,5 +8,6 @@ create table Tests (
     `Type` VARCHAR(128),
     ON_CAMPUS_RESIDENT_FLAG CHAR(1),
     ResponseId CHAR(17),
+    `GUID` CHAR(32),
     PRIMARY KEY (Id)
 );
