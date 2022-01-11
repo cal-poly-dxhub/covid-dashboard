@@ -21,7 +21,7 @@ def generate_available_stats(historical):
         "startDate": start_date,
 
         #total count of tests for students/employees since first date in database
-        "testsSinceStart": get_tests_since(start_date),
+        "testsSinceStart": get_test_counts(start_date),
 
         #positive student cases, including positive student cases yesterday
         "totalPositive": get_total_pos_student(start_date),
@@ -36,10 +36,10 @@ def generate_available_stats(historical):
         "isoRoomsAvailable": get_room_availability(),
 
         #statistics including pos tests, total tests, and daily rolling 7-day % of pos tests over all tests administered
-        "dailyTestPos": get_daily_pos_tests(start_date),
+        "dailyTestPos": get_daily_test_pos(start_date),
 
         #daily count of positive student cases
-        "studentNewCases": get_pos_student_daily(start_date),
+        "studentNewCases": get_daily_on_off_campus(start_date),
 
         #daily count of symptomatic/asymptomatic positive tests
         "symptVsAsympt": get_daily_sympt_asympt(start_date),
@@ -76,7 +76,7 @@ def get_first_date():
     return result
 
 
-def get_tests_since(since_date):
+def get_test_counts(since_date):
     query = """ SELECT  COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusStu,
                         COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusStu,
                         COUNT(CASE WHEN `Type` = 'Faculty' OR `Type` = 'Staff' THEN 1 ELSE NULL END) AS employees,
@@ -103,7 +103,7 @@ def get_tests_since(since_date):
         except:
             logger.error("unable to generate map object from response and format: {}".format(response))
     else:
-        logger.error("No records info returned: TESTS SINCE JAN4")
+        logger.error("No records info returned: testCounts")
     return data
 
 
@@ -247,7 +247,7 @@ def get_room_availability():
     return data
 
 
-def get_daily_pos_tests(since_date = None):
+def get_daily_test_pos(since_date = None):
     #definitions
     positive_test = "Result = 'Detected'"
     valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
@@ -311,7 +311,7 @@ def get_daily_pos_tests(since_date = None):
     return daily_test_pos
 
 
-def get_pos_student_daily(since_date = None):
+def get_daily_on_off_campus(since_date = None):
     '''
         Test_Date   |   onCampusCases   |   offCampusCases
         2021-01-04  |       3           |       1
