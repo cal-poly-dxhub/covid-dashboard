@@ -20,17 +20,20 @@ def generate_available_stats(historical):
         #the earliest recorded testing date in the database
         "startDate": start_date,
 
+        #total count of tests for students/employees since first date in database
+        "testsSinceStart": get_tests_since(start_date),
+
         #positive student cases, including positive student cases yesterday
         "totalPositive": get_total_pos_student(start_date),
-
-        #current count of iso rooms available and occupied
-        "isoRoomsAvailable": get_room_availability(),
 
         #total count of positive student cases 'within the last 7 days'
         "totalPositiveLast7": get_pos_stu_prev_days(7),
 
-        #total count of tests for students/employees since first date in database
-        "testsSinceStart": get_tests_since(start_date),
+        #current count of self-quarantine(s)/quarantinue(s)-in-place
+        "quarantine": get_quarantine_count(),
+
+        #current count of iso rooms available and occupied
+        "isoRoomsAvailable": get_room_availability(),
 
         #statistics including pos tests, total tests, and daily rolling 7-day % of pos tests over all tests administered
         "dailyTestPos": get_daily_pos_tests(start_date),
@@ -41,9 +44,6 @@ def generate_available_stats(historical):
         #daily count of symptomatic/asymptomatic positive tests
         "symptVsAsympt": get_daily_sympt_asympt(start_date),
 
-        #current count of self-quarantine(s)/quarantinue(s)-in-place
-        "quarantine": get_quarantine_count(),
-        
         #daily count of student compliance for on-campus testing requirements
         #"compliance": get_testing_compliance(start_date),
 
@@ -76,48 +76,153 @@ def get_first_date():
     return result
 
 
+def get_tests_since(since_date):
+    query = """ SELECT  COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusStu,
+                        COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusStu,
+                        COUNT(CASE WHEN `Type` = 'Faculty' OR `Type` = 'Staff' THEN 1 ELSE NULL END) AS employees,
+                        COUNT(*) AS Total
+                FROM Tests
+                WHERE DATEDIFF(Test_Date, DATE('{}')) >= 0;""".format(since_date)
+    data = {
+        "total": None,
+        "employees": None,
+        "onCampusStu": None,
+        "offCampusStu": None
+    }
+
+    response = utility.get_response(query)
+
+    if response.get('records'):
+        try:
+            result = utility.generate_map_from_response(response)
+
+            data['employees'] = sum([record.get('employees') for record in result])
+            data['onCampusStu'] = sum([record.get('onCampusStu') for record in result])
+            data['offCampusStu'] = sum([record.get('offCampusStu') for record in result])
+            data['total'] = sum([record.get('Total') for record in result])
+        except:
+            logger.error("unable to generate map object from response and format: {}".format(response))
+    else:
+        logger.error("No records info returned: TESTS SINCE JAN4")
+    return data
+
+
 def get_total_pos_student(since_date = None):
     '''
         ON_CAMPUS_RESIDENT_FLAG     |   Yesterday   |   Total
         N                           |       -       |    -
         Y                           |       -       |    -
     '''
-    pos_students_stmt = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
-                                    COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Result_Date) = 1 THEN 1 ELSE NULL END) AS Yesterday,
-                                    COUNT(*) AS Total
-                            FROM Tests
-                            WHERE `Type` = 'Student'
-                                AND Result = 'Detected'
-                                AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
-                                {}
-                            GROUP BY ON_CAMPUS_RESIDENT_FLAG;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
-    total_positive = {
+    query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
+                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Result_Date) = 1 THEN 1 ELSE NULL END) AS Yesterday,
+                        COUNT(*) AS Total
+                FROM Tests
+                WHERE `Type` = 'Student'
+                    AND Result = 'Detected'
+                    AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
+                    {}
+                GROUP BY ON_CAMPUS_RESIDENT_FLAG;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
+    data = {
         "onCampusStu": None, 
         "onCampusYesterday": None,
         "offCampusStu": None,
         "offCampusYesterday": None
     }
 
-    response = utility.get_response(pos_students_stmt)
+    response = utility.get_response(query)
 
     if response.get('records'):
         try:
             result = utility.generate_map_from_response(response)
 
-            total_positive['onCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
-            total_positive['offCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
+            data['onCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
+            data['offCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
 
-            total_positive['onCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
-            total_positive['offCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
+            data['onCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
+            data['offCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
         except:
             logger.error("Unable to generate map object from response and format: {}".format(response))
     else:
         logger.error("No records info returned: TOTAL POS STUDENTS")
-    return total_positive
+    return data
+
+
+def get_pos_stu_prev_days(days, since_date = None):
+    '''
+        ON_CAMPUS_RESIDENT_FLAG     |   Total
+        N                           |    -
+        Y                           |    -
+    '''
+    query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
+                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) < {0} THEN 1 ELSE NULL END) AS Total
+                FROM Tests
+                WHERE `Type` = 'Student'
+                    AND Result = 'Detected'
+                    AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
+                    {1}
+                GROUP BY ON_CAMPUS_RESIDENT_FLAG
+                ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(str(days), "AND Test_Date >= '{}'".format(since_date) if since_date else "")
+    data = {
+        "onCampus": None,
+        "offCampusInSlo": None
+    }
+
+    response = utility.get_response(query)
+
+    if response.get('records'):
+        try:
+            result = utility.generate_map_from_response(response)
+
+            data['offCampusInSlo'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
+            data['onCampus'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
+        except:
+            logger.error("unable to generate map object from response and format: {}".format(response))
+    else:
+        logger.error("No records info returned: TOTAL POSITIVE STUDENTS LAST 7 DAYS")
+    return data
+
+
+def get_quarantine_count():
+    data = {
+        "selfQuarantine": None,
+        "quarantineInPlace": None,
+        "isolation": None
+    }
+
+    selfQ = 0
+    qInPlace = 0
+    isolation = 0
+
+    try:
+        table_items = utility.get_table_items('cases')
+    except:
+        logger.error("cases table could not be processed.")
+        return data
+        
+    for case in table_items:
+        #disregard tickets meeting any of the below conditions
+        if (case.get('On Campus Resident') != 'Y' or
+            case.get('Close Out Reason') in ["Deleted"] or
+            case.get('Pass Type') in ["Green (Clear for Daily Screener)"] or
+            case.get('I/Q/QiP Housing Location') in ["On-Campus Resident who moved home"]):
+            continue
+
+        if case.get('Reason for Hold') == "Public Health mandated Quarantine in Place":
+            qInPlace += 1
+        elif case.get('Reason for Hold') == "Public Health mandated Quarantine":
+            selfQ += 1
+        elif case.get('Reason for Hold') == "Public Health mandated Isolation":
+            isolation += 1
+    
+    data['selfQuarantine'] = selfQ
+    data['quarantineInPlace'] = qInPlace
+    data['isolation'] = isolation
+
+    return data
 
 
 def get_room_availability():
-    room_count = {
+    data = {
         "total": None,
         "occupied": None
     }
@@ -128,7 +233,7 @@ def get_room_availability():
         table_items = utility.get_table_items('iso_room')
     except:
         logger.error("iso_room table could not be processed.")
-        return room_count
+        return data
         
     for room in table_items:
         #disclude closed tickets from iso room count
@@ -136,77 +241,10 @@ def get_room_availability():
             total += 1
             if room.get('roomStatus') == "Assigned / Occupied":
                 occupied += 1
-    room_count['total'] = total
-    room_count['occupied'] = occupied
+    data['total'] = total
+    data['occupied'] = occupied
 
-    return room_count
-
-
-def get_pos_stu_prev_days(days, since_date = None):
-    '''
-        ON_CAMPUS_RESIDENT_FLAG     |   Total
-        N                           |    -
-        Y                           |    -
-    '''
-    pos_student_stmt = """  SELECT  ON_CAMPUS_RESIDENT_FLAG,
-                                    COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) < {0} THEN 1 ELSE NULL END) AS Total
-                            FROM Tests
-                            WHERE `Type` = 'Student'
-                                AND Result = 'Detected'
-                                AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
-                                {1}
-                            GROUP BY ON_CAMPUS_RESIDENT_FLAG
-                            ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(str(days), "AND Test_Date >= '{}'".format(since_date) if since_date else "")
-    positive_stu_count = {
-        "onCampus": None,
-        "offCampusInSlo": None
-    }
-
-    response = utility.get_response(pos_student_stmt)
-
-    if response.get('records'):
-        try:
-            result = utility.generate_map_from_response(response)
-
-            positive_stu_count['offCampusInSlo'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
-            positive_stu_count['onCampus'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
-        except:
-            logger.error("unable to generate map object from response and format: {}".format(response))
-    else:
-        logger.error("No records info returned: TOTAL POSITIVE STUDENTS LAST 7 DAYS")
-    return positive_stu_count
-
-
-def get_tests_since(since_date):
-    tests_since_stmt = """ SELECT 	COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusStu,
-                                    COUNT(CASE WHEN `Type` = 'Student' AND ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusStu,
-                                    COUNT(CASE WHEN `Type` = 'Faculty' OR `Type` = 'Staff' THEN 1 ELSE NULL END) AS employees,
-                                    COUNT(*) AS Total
-                                 FROM Tests
-                                 WHERE DATEDIFF(Test_Date, DATE('{}')) >= 0;""".format(since_date)
-    tests_since = {
-        "total": None,
-        "employees": None,
-        "onCampusStu": None,
-        "offCampusStu": None
-    }
-
-    response = utility.get_response(tests_since_stmt)
-
-    if response.get('records'):
-        try:
-            result = utility.generate_map_from_response(response)
-
-            tests_since['employees'] = sum([record.get('employees') for record in result])
-
-            tests_since['onCampusStu'] = sum([record.get('onCampusStu') for record in result])
-            tests_since['offCampusStu'] = sum([record.get('offCampusStu') for record in result])
-            tests_since['total'] = sum([record.get('Total') for record in result])
-        except:
-            logger.error("unable to generate map object from response and format: {}".format(response))
-    else:
-        logger.error("No records info returned: TESTS SINCE JAN4")
-    return tests_since
+    return data
 
 
 def get_daily_pos_tests(since_date = None):
@@ -316,11 +354,12 @@ def get_pos_student_daily(since_date = None):
         logger.error("No records info returned: DAILY POSITIVE STUDENTS")
     return student_new_cases
 
-'''
-requirements:
-- Symptomatic cases must be identified with the following string case-sensitive "Symptomatic".
-'''
+
 def get_daily_sympt_asympt(since_date = None):
+    '''
+    requirements:
+    - Symptomatic cases must be identified with the following string case-sensitive "Symptomatic".
+    '''
     sympt_asympt_stmt = """SELECT 	Test_Date,
                                     COUNT(CASE WHEN Reason NOT LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS asymptCases,
                                     COUNT(CASE WHEN Reason LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS symptCases
@@ -356,45 +395,6 @@ def get_daily_sympt_asympt(since_date = None):
     else:
         logger.error("No records info returned: DAILY SYMPT/ASYMPT")
     return sympt_vs_asympt
-
-
-def get_quarantine_count():
-    quarantine = {
-        "selfQuarantine": None,
-        "quarantineInPlace": None,
-        "isolation": None
-    }
-
-    selfQ = 0
-    qInPlace = 0
-    isolation = 0
-
-    try:
-        table_items = utility.get_table_items('cases')
-    except:
-        logger.error("cases table could not be processed.")
-        return quarantine
-        
-    for case in table_items:
-        #disregard tickets meeting any of the below conditions
-        if (case.get('On Campus Resident') != 'Y' or
-            case.get('Close Out Reason') in ["Deleted"] or
-            case.get('Pass Type') in ["Green (Clear for Daily Screener)"] or
-            case.get('I/Q/QiP Housing Location') in ["On-Campus Resident who moved home"]):
-            continue
-
-        if case.get('Reason for Hold') == "Public Health mandated Quarantine in Place":
-            qInPlace += 1
-        elif case.get('Reason for Hold') == "Public Health mandated Quarantine":
-            selfQ += 1
-        elif case.get('Reason for Hold') == "Public Health mandated Isolation":
-            isolation += 1
-    
-    quarantine['selfQuarantine'] = selfQ
-    quarantine['quarantineInPlace'] = qInPlace
-    quarantine['isolation'] = isolation
-
-    return quarantine
 
 
 def get_testing_compliance(since_date = None):
