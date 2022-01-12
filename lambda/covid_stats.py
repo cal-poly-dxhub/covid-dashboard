@@ -49,9 +49,6 @@ def generate_available_stats(historical):
 
         #daily count of student compliance for on-campus testing requirements
         #"compliance": get_testing_compliance(start_date),
-
-        #daily rolling 14-day % of positive cases over all tests administered
-        #"rollingPosCases": get_rolling_pos(start_date)
     }
     return statistics
 
@@ -525,64 +522,3 @@ def get_testing_compliance(since_date = None):
     compliance['testedInLast6Days'] = [utility.safe_division(testedInLast3Days[i] + testedInLast6Days[i], compliance['totalRequired'][i]) for i in range(len(compliance['totalRequired']))]
 
     return compliance
-
-
-def get_rolling_pos(since_date = None):
-    #definitions
-    positive_test = "Result = 'Detected'"
-    valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
-    
-    '''
-        Test_Date   |   posStudents     |   students    | posEmployees  | employees
-        2021-01-04  |       3           |       11      |       1       |   5
-        2021-01-05  |       6           |       31      |       0       |   3
-            ...     |       ...         |       ...     |       ...     |   ...
-    '''
-    rolling_pos_stmt = """  SELECT 	Test_Date,
-                                    COUNT(CASE WHEN `Type` = 'Student' AND {0} THEN 1 ELSE NULL END) AS posStudents,
-                                    COUNT(CASE WHEN `Type` = 'Student' AND {1} THEN 1 ELSE NULL END) AS students,
-                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') AND {0} THEN 1 ELSE NULL END) AS posEmployees,
-                                    COUNT(CASE WHEN (`Type` = 'Staff' OR `Type` = 'Faculty') AND {1} THEN 1 ELSE NULL END) AS employees
-                            FROM Tests
-                            {2}
-                            GROUP BY Test_Date
-                            ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= '{}'".format(since_date) if since_date else "")
-    rolling_pos_cases = {
-        "dates": None,
-        "students": None,
-        "employees": None
-    }
-
-    response = utility.get_response(rolling_pos_stmt)
-
-    if response.get('records'):
-        try:
-            result = utility.generate_daily_map_from_response("Test_Date", response)
-
-            start_date = since_date if since_date else DEFAULT_CUTOFF_DATE
-            start_date = datetime.strptime(start_date, DATE_FORMAT)
-
-            #creates a complete list of dates from start_date to today PST
-            rolling_pos_cases['dates'] = [datetime.strftime(start_date + timedelta(days=x), DATE_FORMAT) for x in range((datetime.now(tz=pytz.timezone('US/Pacific')).date() - start_date.date()).days)]
-            
-            #scale below lists to the size of 'dates' by filling in gaps with 0s
-            total_students = [result['students'].get(date) or 0 for date in rolling_pos_cases['dates']]
-            pos_students = [result['posStudents'].get(date) or 0 for date in rolling_pos_cases['dates']]
-
-            total_employees = [result['employees'].get(date) or 0 for date in rolling_pos_cases['dates']]
-            pos_employees = [result['posEmployees'].get(date) or 0 for date in rolling_pos_cases['dates']]
-            
-            rolling_pos_cases['students'] = utility.get_rolling_average(rolling_pos_cases['dates'],
-                                                                14,
-                                                                pos_students,
-                                                                total_students)
-            rolling_pos_cases['employees'] = utility.get_rolling_average(rolling_pos_cases['dates'],
-                                                                14,
-                                                                pos_employees,
-                                                                total_employees)
-        except Exception as e:
-            logger.error("rolling positives error: {}".format(str(e)))
-            #logger.error("unable to generate map object from response and format: {}".format(response))
-    else:
-        logger.error("No records info returned: ROLLING POSITIVE")
-    return rolling_pos_cases
