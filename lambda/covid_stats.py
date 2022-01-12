@@ -23,6 +23,9 @@ def generate_available_stats(historical):
         #total count of tests for students/employees since first date in database
         "testsSinceStart": get_test_counts(start_date),
 
+        #Students who have tested positive; on/off campus for yesterday, last7, & total
+        "positiveStudentCounts": get_positive_student_counts(start_date),
+
         #positive student cases, including positive student cases yesterday
         "totalPositive": get_total_pos_student(start_date),
 
@@ -104,6 +107,67 @@ def get_test_counts(since_date):
             logger.error("unable to generate map object from response and format: {}".format(response))
     else:
         logger.error("No records info returned: testCounts")
+    return data
+
+
+def get_positive_student_counts(since_date):
+    '''
+        ON_CAMPUS_RESIDENT_FLAG  |  Yesterday  |  Last7  |  Total
+        N                        |  -          |  -      |  -
+        Y                        |  -          |  -      |  -
+    '''
+    query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
+                        COUNT(CASE WHEN Yesterday > 0 THEN 1 ELSE NULL END) AS Yesterday,
+                        COUNT(CASE WHEN Last7 > 0 THEN 1 ELSE NULL END) AS Last7,
+                        COUNT(CASE WHEN Total > 0 THEN 1 ELSE NULL END) AS Total
+                FROM (
+                    SELECT ON_CAMPUS_RESIDENT_FLAG, GUID,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 1 THEN 1 ELSE NULL END) AS Yesterday,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 7 THEN 1 ELSE NULL END) AS Last7,
+                            COUNT(1) AS Total
+                    FROM Tests
+                    WHERE `Type` = 'Student'
+                        AND Result = 'Detected'
+                        AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
+                        AND Test_Date >= '{0}'
+                    GROUP BY ON_CAMPUS_RESIDENT_FLAG, GUID
+                ) AS a
+                GROUP BY ON_CAMPUS_RESIDENT_FLAG
+                ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(since_date)
+    data = {
+        "onCampus": {
+            "Yesterday": None,
+            "Last7": None,
+            "Total": None,
+        },
+        "offCampus": {
+            "Yesterday": None,
+            "Last7": None,
+            "Total": None,
+        }
+    }
+
+    response = utility.get_response(query)
+
+    if response.get('records'):
+        try:
+            result = utility.generate_map_from_response(response)
+
+            for record in result:
+                if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y':
+                    data['onCampus']['Yesterday'] = record.get('Yesterday')
+                    data['onCampus']['Last7'] = record.get('Last7')
+                    data['onCampus']['Total'] = record.get('Total')
+                
+                if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N':
+                    data['offCampus']['Yesterday'] = record.get('Yesterday')
+                    data['offCampus']['Last7'] = record.get('Last7')
+                    data['offCampus']['Total'] = record.get('Total')
+
+        except:
+            logger.error("unable to generate map object from response and format: {}".format(response))
+    else:
+        logger.error("No records info returned: positiveStudentCounts")
     return data
 
 
