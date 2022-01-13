@@ -11,7 +11,7 @@ TIME_FORMAT = "%H:%M:%S"
 DEFAULT_CUTOFF_DATE = "2020-09-14" #Start of Fall 2020
 
 def generate_available_stats(historical):
-    start_date = get_first_date() if historical else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(months=3), DATE_FORMAT)
+    start_date = get_first_date() if historical else datetime.strftime(datetime.now(tz=pytz.timezone('US/Pacific')) - relativedelta(days=90), DATE_FORMAT)
 
     statistics = {
         #current datetime in PST timestamp of statistics
