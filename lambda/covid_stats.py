@@ -308,7 +308,7 @@ def get_room_availability():
     return data
 
 
-def get_daily_test_pos(since_date = None):
+def get_daily_test_pos(since_date):
     #definitions
     positive_test = "Result = 'Detected'"
     valid_test = "Result NOT IN ('Inconclusive', 'Invalid', 'TNP')"
@@ -320,14 +320,14 @@ def get_daily_test_pos(since_date = None):
         2021-01-05  |       0           |       17
             ...     |       ...         |       ...
     '''
-    daily_test_pos_stmt = """  SELECT  Test_Date,
-                                        COUNT(CASE WHEN {0} THEN 1 ELSE NULL END) AS positiveTests,
-                                        COUNT(CASE WHEN {1} THEN 1 ELSE NULL END) AS validTests,
-                                        COUNT(*) AS performedTests
-                                FROM Tests
-                                {2}
-                                GROUP BY Test_Date
-                                ORDER BY Test_Date ASC;""".format(positive_test, valid_test, "WHERE Test_Date >= DATE_SUB('{0}', INTERVAL {1} DAY)".format(since_date, str(rolling_avg)) if since_date else "")
+    query = """ SELECT  Test_Date,
+                        COUNT(CASE WHEN {0} THEN 1 ELSE NULL END) AS positiveTests,
+                        COUNT(CASE WHEN {1} THEN 1 ELSE NULL END) AS validTests,
+                        COUNT(*) AS performedTests
+                FROM Tests
+                WHERE Test_Date >= DATE_SUB('{2}', INTERVAL {3} DAY)
+                GROUP BY Test_Date
+                ORDER BY Test_Date ASC;""".format(positive_test, valid_test, since_date, str(rolling_avg))
     daily_test_pos = {
         "positiveTests": None,
         "performedTests": None,
@@ -335,7 +335,7 @@ def get_daily_test_pos(since_date = None):
         "dates": None
     }
     
-    response = utility.get_response(daily_test_pos_stmt)
+    response = utility.get_response(query)
 
     if response.get('records'):
         try:
@@ -372,29 +372,29 @@ def get_daily_test_pos(since_date = None):
     return daily_test_pos
 
 
-def get_daily_on_off_campus(since_date = None):
+def get_daily_on_off_campus(since_date):
     '''
         Test_Date   |   onCampusCases   |   offCampusCases
         2021-01-04  |       3           |       1
         2021-01-05  |       6           |       11
             ...     |       ...         |       ...
     '''
-    pos_student_stmt = """  SELECT  Test_Date,
-                                    COUNT(CASE WHEN ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusCases,
-                                    COUNT(CASE WHEN ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusCases
-                            FROM Tests
-                            WHERE Result = 'Detected'
-                                AND `Type` = 'Student'
-                                {}
-                            GROUP BY Test_Date
-                            ORDER BY Test_Date ASC;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
+    query = """ SELECT  Test_Date,
+                        COUNT(CASE WHEN ON_CAMPUS_RESIDENT_FLAG = 'Y' THEN 1 ELSE NULL END) AS onCampusCases,
+                        COUNT(CASE WHEN ON_CAMPUS_RESIDENT_FLAG = 'N' THEN 1 ELSE NULL END) AS offCampusCases
+                FROM Tests
+                WHERE Result = 'Detected'
+                    AND `Type` = 'Student'
+                    AND Test_Date >= '{}'
+                GROUP BY Test_Date
+                ORDER BY Test_Date ASC;""".format(since_date)
     student_new_cases = {
         "onCampusCases": None,
         "offCampusCases": None,
         "dates": None
     }
 
-    response = utility.get_response(pos_student_stmt)
+    response = utility.get_response(query)
 
     if response.get('records'):
         try:
@@ -416,27 +416,27 @@ def get_daily_on_off_campus(since_date = None):
     return student_new_cases
 
 
-def get_daily_sympt_asympt(since_date = None):
+def get_daily_sympt_asympt(since_date):
     '''
     requirements:
     - Symptomatic cases must be identified with the following string case-sensitive "Symptomatic".
     '''
-    sympt_asympt_stmt = """SELECT 	Test_Date,
-                                    COUNT(CASE WHEN Reason NOT LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS asymptCases,
-                                    COUNT(CASE WHEN Reason LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS symptCases
-                            FROM Tests
-                            WHERE `Type` = 'Student'
-                                AND Result = 'Detected'
-                                {}
-                            GROUP BY Test_Date
-                            ORDER BY Test_Date ASC;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
+    query = """ SELECT  Test_Date,
+                        COUNT(CASE WHEN Reason NOT LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS asymptCases,
+                        COUNT(CASE WHEN Reason LIKE '%Symptomatic%' THEN 1 ELSE NULL END) AS symptCases
+                FROM Tests
+                WHERE `Type` = 'Student'
+                    AND Result = 'Detected'
+                    AND Test_Date >= '{}'
+                GROUP BY Test_Date
+                ORDER BY Test_Date ASC;""".format(since_date)
     sympt_vs_asympt = {
         "symptCases": None,
         "asymptCases": None,
         "dates": None
     }
 
-    response = utility.get_response(sympt_asympt_stmt)
+    response = utility.get_response(query)
 
     if response.get('records'):
         try:
