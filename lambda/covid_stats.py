@@ -21,16 +21,13 @@ def generate_available_stats(historical):
         "startDate": start_date,
 
         #total count of tests for students/employees since first date in database
-        "testsSinceStart": get_test_counts(start_date),
+        "testCounts": get_test_counts(start_date),
 
         #Students who have tested positive; on/off campus for yesterday, last7, & total
         "positiveStudentCounts": get_positive_student_counts(start_date),
 
-        #positive student cases, including positive student cases yesterday
-        "totalPositive": get_total_pos_student(start_date),
-
-        #total count of positive student cases 'within the last 7 days'
-        "totalPositiveLast7": get_pos_stu_prev_days(7),
+        #positive test results for students; on/off campus for yesterday, last7, & total
+        "studentPositiveTestCounts": get_student_positive_test_counts(start_date),
 
         #current count of self-quarantine(s)/quarantinue(s)-in-place
         "quarantine": get_quarantine_count(),
@@ -42,10 +39,10 @@ def generate_available_stats(historical):
         "dailyTestPos": get_daily_test_pos(start_date),
 
         #daily count of positive student cases
-        "studentNewCases": get_daily_on_off_campus(start_date),
+        "dailyOnVsOffCampus": get_daily_on_off_campus(start_date),
 
         #daily count of symptomatic/asymptomatic positive tests
-        "symptVsAsympt": get_daily_sympt_asympt(start_date),
+        "dailySymptVsAsympt": get_daily_sympt_asympt(start_date),
 
         #daily count of student compliance for on-campus testing requirements
         #"compliance": get_testing_compliance(start_date),
@@ -168,64 +165,34 @@ def get_positive_student_counts(since_date):
     return data
 
 
-def get_total_pos_student(since_date = None):
+def get_student_positive_test_counts(since_date):
     '''
-        ON_CAMPUS_RESIDENT_FLAG     |   Yesterday   |   Total
-        N                           |       -       |    -
-        Y                           |       -       |    -
+        ON_CAMPUS_RESIDENT_FLAG  |  Yesterday  |  Last7  |  Total
+        N                        |  -          |  -      |  -
+        Y                        |  -          |  -      |  -
     '''
     query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
-                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Result_Date) = 1 THEN 1 ELSE NULL END) AS Yesterday,
-                        COUNT(*) AS Total
+                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 1 THEN 1 ELSE NULL END) AS Yesterday,
+                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 7 THEN 1 ELSE NULL END) AS Last7,
+                        COUNT(1) AS Total
                 FROM Tests
                 WHERE `Type` = 'Student'
                     AND Result = 'Detected'
                     AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
-                    {}
-                GROUP BY ON_CAMPUS_RESIDENT_FLAG;""".format("AND Test_Date >= '{}'".format(since_date) if since_date else "")
-    data = {
-        "onCampusStu": None, 
-        "onCampusYesterday": None,
-        "offCampusStu": None,
-        "offCampusYesterday": None
-    }
-
-    response = utility.get_response(query)
-
-    if response.get('records'):
-        try:
-            result = utility.generate_map_from_response(response)
-
-            data['onCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
-            data['offCampusStu'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
-
-            data['onCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
-            data['offCampusYesterday'] = sum([record.get('Yesterday') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
-        except:
-            logger.error("Unable to generate map object from response and format: {}".format(response))
-    else:
-        logger.error("No records info returned: TOTAL POS STUDENTS")
-    return data
-
-
-def get_pos_stu_prev_days(days, since_date = None):
-    '''
-        ON_CAMPUS_RESIDENT_FLAG     |   Total
-        N                           |    -
-        Y                           |    -
-    '''
-    query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
-                        COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) < {0} THEN 1 ELSE NULL END) AS Total
-                FROM Tests
-                WHERE `Type` = 'Student'
-                    AND Result = 'Detected'
-                    AND Test_Date < DATE(CONVERT_TZ(NOW(),'+00:00','-8:00'))
-                    {1}
+                    AND Test_Date >= '{0}'
                 GROUP BY ON_CAMPUS_RESIDENT_FLAG
-                ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(str(days), "AND Test_Date >= '{}'".format(since_date) if since_date else "")
+                ORDER BY ON_CAMPUS_RESIDENT_FLAG ASC;""".format(since_date)
     data = {
-        "onCampus": None,
-        "offCampusInSlo": None
+        "onCampus": {
+            "Yesterday": None,
+            "Last7": None,
+            "Total": None,
+        },
+        "offCampus": {
+            "Yesterday": None,
+            "Last7": None,
+            "Total": None,
+        }
     }
 
     response = utility.get_response(query)
@@ -234,12 +201,21 @@ def get_pos_stu_prev_days(days, since_date = None):
         try:
             result = utility.generate_map_from_response(response)
 
-            data['offCampusInSlo'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N'])
-            data['onCampus'] = sum([record.get('Total') for record in result if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y'])
+            for record in result:
+                if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'Y':
+                    data['onCampus']['Yesterday'] = record.get('Yesterday')
+                    data['onCampus']['Last7'] = record.get('Last7')
+                    data['onCampus']['Total'] = record.get('Total')
+                
+                if record.get('ON_CAMPUS_RESIDENT_FLAG') == 'N':
+                    data['offCampus']['Yesterday'] = record.get('Yesterday')
+                    data['offCampus']['Last7'] = record.get('Last7')
+                    data['offCampus']['Total'] = record.get('Total')
+
         except:
             logger.error("unable to generate map object from response and format: {}".format(response))
     else:
-        logger.error("No records info returned: TOTAL POSITIVE STUDENTS LAST 7 DAYS")
+        logger.error("No records info returned: studentPositiveTestCounts")
     return data
 
 

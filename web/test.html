@@ -148,18 +148,18 @@
                             </tr>
                             <tr>
                                 <th scope="row">Total Since<br><span id="tp_sinceDate">--</span></th>
-                                <td class="bold-num" id="tp_oncampus">--</td>
-                                <td class="bold-num" id="tp_offcampus">--</td>
+                                <td class="bold-num" id="tp_on_total">--</td>
+                                <td class="bold-num" id="tp_off_total">--</td>
                             </tr>
                             <tr>
                                 <th scope="row">Last 7 Days</th>
-                                <td class="bold-num" id="tp7_oncampus">--</td>
-                                <td class="bold-num" id="tp7_offcampus">--</td>
+                                <td class="bold-num" id="tp_on_last7">--</td>
+                                <td class="bold-num" id="tp_off_last7">--</td>
                             </tr>
                             <tr>
                                 <th scope="row">Yesterday</th>
-                                <td class="bold-num" id="tp_yesterdayon">--</td>
-                                <td class="bold-num" id="tp_yesterdayoff">--</td>
+                                <td class="bold-num" id="tp_on_yesterday">--</td>
+                                <td class="bold-num" id="tp_off_yesterday">--</td>
                             </tr>
                         </tbody>
                     </table>
@@ -304,10 +304,10 @@
 
                     $('#tp_sinceDate, #tp_startDate, #sp_sinceDate').html(moment(dataSource.startDate).format("MMM DD, YYYY"));
 
-                    document.getElementById('ttsj4_total').innerHTML = dataSource.testsSinceStart.total.toLocaleString();
-                    document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testsSinceStart.onCampusStu.toLocaleString();
-                    document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testsSinceStart.offCampusStu.toLocaleString();
-                    document.getElementById('ttsj4_employee').innerHTML = dataSource.testsSinceStart.employees.toLocaleString();
+                    document.getElementById('ttsj4_total').innerHTML = dataSource.testCounts.total.toLocaleString();
+                    document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testCounts.onCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testCounts.offCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_employee').innerHTML = dataSource.testCounts.employees.toLocaleString();
 
                     document.getElementById('sp_on_total').innerHTML = dataSource.positiveStudentCounts.onCampus.Total.toLocaleString();
                     document.getElementById('sp_on_last7').innerHTML = dataSource.positiveStudentCounts.onCampus.Last7.toLocaleString();
@@ -316,13 +316,12 @@
                     document.getElementById('sp_off_last7').innerHTML = dataSource.positiveStudentCounts.offCampus.Last7.toLocaleString();
                     document.getElementById('sp_off_yesterday').innerHTML = dataSource.positiveStudentCounts.offCampus.Yesterday.toLocaleString();
 
-                    document.getElementById('tp_oncampus').innerHTML = dataSource.totalPositive.onCampusStu.toLocaleString();
-                    document.getElementById('tp_yesterdayon').innerHTML = dataSource.totalPositive.onCampusYesterday.toLocaleString();
-                    document.getElementById('tp_offcampus').innerHTML = dataSource.totalPositive.offCampusStu.toLocaleString();
-                    document.getElementById('tp_yesterdayoff').innerHTML = dataSource.totalPositive.offCampusYesterday.toLocaleString();
-
-                    document.getElementById('tp7_oncampus').innerHTML = dataSource.totalPositiveLast7.onCampus.toLocaleString();
-                    document.getElementById('tp7_offcampus').innerHTML = dataSource.totalPositiveLast7.offCampusInSlo.toLocaleString();
+                    document.getElementById('tp_on_total').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Total.toLocaleString();
+                    document.getElementById('tp_on_last7').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Last7.toLocaleString();
+                    document.getElementById('tp_on_yesterday').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Yesterday.toLocaleString();
+                    document.getElementById('tp_off_total').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Total.toLocaleString();
+                    document.getElementById('tp_off_last7').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Last7.toLocaleString();
+                    document.getElementById('tp_off_yesterday').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Yesterday.toLocaleString();
 
                     document.getElementById('qqip_selfQ').innerHTML = dataSource.quarantine.selfQuarantine.toLocaleString();
                     document.getElementById('qqip_qInPlace').innerHTML = dataSource.quarantine.quarantineInPlace.toLocaleString();
@@ -352,7 +351,7 @@
                     
                     //New Student Cases
                     var tbody = $('#dailyOnVsOffCampus .chart-data-table table tbody').empty();
-                    var data = dataSource.studentNewCases;
+                    var data = dataSource.dailyOnVsOffCampus;
                     for(var i=0; i<data.dates.length; i++) {
                         var row = '<tr>';
                         row += '<th scope="row">'+data.dates[i]+'</th>';
@@ -368,7 +367,7 @@
                     
                     //Symptomatic vs Asymptomatic Cases
                     var tbody = $('#dailySymptVsAsympt .chart-data-table table tbody').empty();
-                    var data = dataSource.symptVsAsympt;
+                    var data = dataSource.dailySymptVsAsympt;
                     for(var i=0; i<data.dates.length; i++) {
                         var row = '<tr>';
                         row += '<th scope="row">'+data.dates[i]+'</th>';
