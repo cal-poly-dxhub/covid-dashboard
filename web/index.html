@@ -298,7 +298,12 @@
 
                 $('#download-link').attr("href", url);
 
-                $.getJSON(url, function(dataSource) {
+                var request = jQuery.ajax({
+                    url,
+                    dataType: "json",
+                    ifModified: true
+                });
+                request.done(function(dataSource) {
                     const dateString = moment(dataSource.updateDateTime).format("MMM DD, YYYY h:mm A");
                     document.getElementById('updateDateTime').innerHTML = "Updated on " + dateString + ".";
 
