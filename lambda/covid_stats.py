@@ -111,14 +111,21 @@ def get_positive_student_counts(since_date):
         Y                        |  -          |  -      |  -
     '''
     query = """ SELECT  ON_CAMPUS_RESIDENT_FLAG,
-                        COUNT(CASE WHEN Yesterday > 0 THEN 1 ELSE NULL END) AS Yesterday,
-                        COUNT(CASE WHEN Last7 > 0 THEN 1 ELSE NULL END) AS Last7,
-                        COUNT(CASE WHEN Total > 0 THEN 1 ELSE NULL END) AS Total
+                        COUNT(CASE WHEN Total > 0 THEN 1 ELSE NULL END) AS Total,
+                        COUNT(CASE WHEN Last7a > 0 AND Last7b = 0 THEN 1 ELSE NULL END) AS Last7,
+                        COUNT(CASE WHEN Last1a > 0 AND Last1b = 0 THEN 1 ELSE NULL END) AS Yesterday
                 FROM (
-                    SELECT ON_CAMPUS_RESIDENT_FLAG, GUID,
-                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 1 THEN 1 ELSE NULL END) AS Yesterday,
-                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 7 THEN 1 ELSE NULL END) AS Last7,
-                            COUNT(1) AS Total
+                    SELECT  ON_CAMPUS_RESIDENT_FLAG,
+                            GUID,
+                            COUNT(1) AS Total,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 7 THEN 1 ELSE NULL END) AS Last7a,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) > 7
+                                AND DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 90 THEN 1 ELSE NULL END
+                            ) AS Last7b,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 1 THEN 1 ELSE NULL END) AS Last1a,
+                            COUNT(CASE WHEN DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) > 1
+                                AND DATEDIFF(CONVERT_TZ(NOW(),'+00:00','-8:00'), Test_Date) <= 90 THEN 1 ELSE NULL END
+                            ) AS Last1b
                     FROM Tests
                     WHERE `Type` = 'Student'
                         AND Result = 'Detected'
