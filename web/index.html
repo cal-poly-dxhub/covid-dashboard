@@ -88,51 +88,81 @@
                     </p>
                 </div>
             </div>
-            <!--Test Results-->
+            <!--Total Tests-->
             <div class="row">
+                <div class="col-sm space-after">
+                    <h1>Total Tests Since <span id="tp_startDate">--</span></h1>
+                    <div class="row green">
+                        <div class="col-sm-3 col-6">
+                            <span class="bold-num" id="ttsj4_total">--</span><br>Total
+                        </div>
+                        <div class="col-sm-3 col-6">
+                            <span class="bold-num" id="ttsj4_employee">--</span><br>Employees
+                        </div>
+                        <div class="col-sm-3 col-6">
+                            <span class="bold-num" id="ttsj4_onCampus">--</span><br>On-Campus Students
+                        </div>
+                        <div class="col-sm-3 col-6">
+                            <span class="bold-num" id="ttsj4_offCampus">--</span><br>Off-Campus Students
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Positive Counts-->
+            <div class="row">
+                <div class="col-sm space-after">
+                    <h1>Students Who Have Tested Positive</h1>
+                    <table class="table table-borderless pos-tests-tbl">
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <th scope="col">Student Living On Campus</th>
+                                <th scope="col">Student Living Off Campus</th>
+                            </tr>
+                            <tr>
+                                <th scope="row">Since<br><span id="sp_sinceDate">--</span></th>
+                                <td class="bold-num" id="sp_on_total">--</td>
+                                <td class="bold-num" id="sp_off_total">--</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Last 7 Days</th>
+                                <td class="bold-num" id="sp_on_last7">--</td>
+                                <td class="bold-num" id="sp_off_last7">--</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Yesterday</th>
+                                <td class="bold-num" id="sp_on_yesterday">--</td>
+                                <td class="bold-num" id="sp_off_yesterday">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="col-sm space-after">
                     <h1>Positive Tests</h1>
                     <table class="table table-borderless pos-tests-tbl">
                         <tbody>
                             <tr>
                                 <td></td>
-                                <th scope="col">On-Campus</th>
-                                <th scope="col">Off-Campus</th>
+                                <th scope="col">Student Living On Campus</th>
+                                <th scope="col">Student Living Off Campus</th>
                             </tr>
                             <tr>
-                                <th scope="row">Total Since<br><span id="tp_sinceDate">--</span></th>
-                                <td class="bold-num" id="tp_oncampus">--</td>
-                                <td class="bold-num" id="tp_offcampus">--</td>
+                                <th scope="row">Since<br><span id="tp_sinceDate">--</span></th>
+                                <td class="bold-num" id="tp_on_total">--</td>
+                                <td class="bold-num" id="tp_off_total">--</td>
                             </tr>
                             <tr>
                                 <th scope="row">Last 7 Days</th>
-                                <td class="bold-num" id="tp7_oncampus">--</td>
-                                <td class="bold-num" id="tp7_offcampus">--</td>
+                                <td class="bold-num" id="tp_on_last7">--</td>
+                                <td class="bold-num" id="tp_off_last7">--</td>
                             </tr>
                             <tr>
                                 <th scope="row">Yesterday</th>
-                                <td class="bold-num" id="tp_yesterdayon">--</td>
-                                <td class="bold-num" id="tp_yesterdayoff">--</td>
+                                <td class="bold-num" id="tp_on_yesterday">--</td>
+                                <td class="bold-num" id="tp_off_yesterday">--</td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-                <div class="col-sm space-after">
-                    <h1>Total Tests Since <span id="tp_startDate">--</span></h1>
-                    <div class="row green">
-                        <div class="col-6">
-                            <span class="bold-num" id="ttsj4_total">--</span><br>Total
-                        </div>
-                        <div class="col-6">
-                            <span class="bold-num" id="ttsj4_employee">--</span><br>Employees
-                        </div>
-                        <div class="col-6">
-                            <span class="bold-num" id="ttsj4_onCampus">--</span><br>On-Campus Students
-                        </div>
-                        <div class="col-6">
-                            <span class="bold-num" id="ttsj4_offCampus">--</span><br>Off-Campus Students
-                        </div>
-                    </div>
                 </div>
             </div>
             <!--I/Q/QiP & Beds-->
@@ -197,7 +227,7 @@
             <div class="row space-after">
                 <div class="col">
                     <h1>Positive Tests: Students Living On-Campus vs Off-Campus</h1>
-                    <div id="studentNewCases">
+                    <div id="dailyOnVsOffCampus">
                         <div class="chart-container">
                             <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
                         </div>
@@ -223,7 +253,7 @@
             <div class="row space-after">
                 <div class="col">
                     <h1>Positive Tests: Symptomatic vs Asymptomatic Cases</h1>
-                    <div id="symptVsAsympt">
+                    <div id="dailySymptVsAsympt">
                         <div class="chart-container">
                             <canvas role="img">Text alternative for this graph is in the data table below.</canvas>
                         </div>
@@ -272,28 +302,33 @@
                     const dateString = moment(dataSource.updateDateTime).format("MMM DD, YYYY h:mm A");
                     document.getElementById('updateDateTime').innerHTML = "Updated on " + dateString + ".";
 
-                    document.getElementById('tp_oncampus').innerHTML = dataSource.totalPositive.onCampusStu.toLocaleString();
-                    document.getElementById('tp_yesterdayon').innerHTML = dataSource.totalPositive.onCampusYesterday.toLocaleString();
-                    document.getElementById('tp_offcampus').innerHTML = dataSource.totalPositive.offCampusStu.toLocaleString();
-                    document.getElementById('tp_yesterdayoff').innerHTML = dataSource.totalPositive.offCampusYesterday.toLocaleString();
+                    $('#tp_sinceDate, #tp_startDate, #sp_sinceDate').html(moment(dataSource.startDate).format("MMM DD, YYYY"));
 
-                    document.getElementById('tp7_oncampus').innerHTML = dataSource.totalPositiveLast7.onCampus.toLocaleString();
-                    document.getElementById('tp7_offcampus').innerHTML = dataSource.totalPositiveLast7.offCampusInSlo.toLocaleString();
+                    document.getElementById('ttsj4_total').innerHTML = dataSource.testCounts.total.toLocaleString();
+                    document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testCounts.onCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testCounts.offCampusStu.toLocaleString();
+                    document.getElementById('ttsj4_employee').innerHTML = dataSource.testCounts.employees.toLocaleString();
 
-                    document.getElementById('tp_sinceDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
-                    document.getElementById('tp_startDate').innerHTML = moment(dataSource.startDate).format("MMM DD, YYYY");
+                    document.getElementById('sp_on_total').innerHTML = dataSource.positiveStudentCounts.onCampus.Total.toLocaleString();
+                    document.getElementById('sp_on_last7').innerHTML = dataSource.positiveStudentCounts.onCampus.Last7.toLocaleString();
+                    document.getElementById('sp_on_yesterday').innerHTML = dataSource.positiveStudentCounts.onCampus.Yesterday.toLocaleString();
+                    document.getElementById('sp_off_total').innerHTML = dataSource.positiveStudentCounts.offCampus.Total.toLocaleString();
+                    document.getElementById('sp_off_last7').innerHTML = dataSource.positiveStudentCounts.offCampus.Last7.toLocaleString();
+                    document.getElementById('sp_off_yesterday').innerHTML = dataSource.positiveStudentCounts.offCampus.Yesterday.toLocaleString();
 
-                    document.getElementById('ttsj4_total').innerHTML = dataSource.testsSinceStart.total.toLocaleString();
-                    document.getElementById('ttsj4_onCampus').innerHTML = dataSource.testsSinceStart.onCampusStu.toLocaleString();
-                    document.getElementById('ttsj4_offCampus').innerHTML = dataSource.testsSinceStart.offCampusStu.toLocaleString();
-                    document.getElementById('ttsj4_employee').innerHTML = dataSource.testsSinceStart.employees.toLocaleString();
-                    
-                    document.getElementById('iso_beds_occu').innerHTML = dataSource.isoRoomsAvailable.occupied.toLocaleString();
-                    document.getElementById('iso_beds_total').innerHTML = dataSource.isoRoomsAvailable.total.toLocaleString();
-                    
+                    document.getElementById('tp_on_total').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Total.toLocaleString();
+                    document.getElementById('tp_on_last7').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Last7.toLocaleString();
+                    document.getElementById('tp_on_yesterday').innerHTML = dataSource.studentPositiveTestCounts.onCampus.Yesterday.toLocaleString();
+                    document.getElementById('tp_off_total').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Total.toLocaleString();
+                    document.getElementById('tp_off_last7').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Last7.toLocaleString();
+                    document.getElementById('tp_off_yesterday').innerHTML = dataSource.studentPositiveTestCounts.offCampus.Yesterday.toLocaleString();
+
                     document.getElementById('qqip_selfQ').innerHTML = dataSource.quarantine.selfQuarantine.toLocaleString();
                     document.getElementById('qqip_qInPlace').innerHTML = dataSource.quarantine.quarantineInPlace.toLocaleString();
                     document.getElementById('qqip_isolation').innerHTML = dataSource.quarantine.isolation.toLocaleString();
+
+                    document.getElementById('iso_beds_occu').innerHTML = dataSource.isoRoomsAvailable.occupied.toLocaleString();
+                    document.getElementById('iso_beds_total').innerHTML = dataSource.isoRoomsAvailable.total.toLocaleString();
 
 
                     //Daily Tests and Positive Cases with 7-Day Avg Positivity Rate
@@ -315,8 +350,8 @@
                     charts.dailyTestPosChart.update(animationDuration);
                     
                     //New Student Cases
-                    var tbody = $('#studentNewCases .chart-data-table table tbody').empty();
-                    var data = dataSource.studentNewCases;
+                    var tbody = $('#dailyOnVsOffCampus .chart-data-table table tbody').empty();
+                    var data = dataSource.dailyOnVsOffCampus;
                     for(var i=0; i<data.dates.length; i++) {
                         var row = '<tr>';
                         row += '<th scope="row">'+data.dates[i]+'</th>';
@@ -325,14 +360,14 @@
                         row += '</tr>';
                         tbody.append(row);
                     }
-                    charts.studentNewCasesChart.data.datasets[0].data = data.onCampusCases;
-                    charts.studentNewCasesChart.data.datasets[1].data = data.offCampusCases;
-                    charts.studentNewCasesChart.data.labels = data.dates;
-                    charts.studentNewCasesChart.update(animationDuration);
+                    charts.dailyOnVsOffCampusChart.data.datasets[0].data = data.onCampusCases;
+                    charts.dailyOnVsOffCampusChart.data.datasets[1].data = data.offCampusCases;
+                    charts.dailyOnVsOffCampusChart.data.labels = data.dates;
+                    charts.dailyOnVsOffCampusChart.update(animationDuration);
                     
                     //Symptomatic vs Asymptomatic Cases
-                    var tbody = $('#symptVsAsympt .chart-data-table table tbody').empty();
-                    var data = dataSource.symptVsAsympt;
+                    var tbody = $('#dailySymptVsAsympt .chart-data-table table tbody').empty();
+                    var data = dataSource.dailySymptVsAsympt;
                     for(var i=0; i<data.dates.length; i++) {
                         var row = '<tr>';
                         row += '<th scope="row">'+data.dates[i]+'</th>';
@@ -341,10 +376,10 @@
                         row += '</tr>';
                         tbody.append(row);
                     }
-                    charts.symptVsAsymptChart.data.datasets[0].data = data.symptCases;
-                    charts.symptVsAsymptChart.data.datasets[1].data = data.asymptCases;
-                    charts.symptVsAsymptChart.data.labels = data.dates;
-                    charts.symptVsAsymptChart.update(animationDuration);
+                    charts.dailySymptVsAsymptChart.data.datasets[0].data = data.symptCases;
+                    charts.dailySymptVsAsymptChart.data.datasets[1].data = data.asymptCases;
+                    charts.dailySymptVsAsymptChart.data.labels = data.dates;
+                    charts.dailySymptVsAsymptChart.update(animationDuration);
                 });
             }
 
@@ -438,7 +473,7 @@
                         }
                     }
                 });
-                var studentNewCasesChart = new Chart($('#studentNewCases .chart-container canvas'), {
+                var dailyOnVsOffCampusChart = new Chart($('#dailyOnVsOffCampus .chart-container canvas'), {
                     type: 'bar',
                     data: {
                         datasets: [
@@ -470,7 +505,7 @@
                         }
                     }
                 });
-                var symptVsAsymptChart = new Chart($('#symptVsAsympt .chart-container canvas'), {
+                var dailySymptVsAsymptChart = new Chart($('#dailySymptVsAsympt .chart-container canvas'), {
                     type: 'bar',
                     data: {
                         datasets: [
@@ -505,8 +540,8 @@
 
                 window.charts = {
                     dailyTestPosChart: dailyTestPosChart,
-                    studentNewCasesChart: studentNewCasesChart,
-                    symptVsAsymptChart: symptVsAsymptChart
+                    dailyOnVsOffCampusChart: dailyOnVsOffCampusChart,
+                    dailySymptVsAsymptChart: dailySymptVsAsymptChart
                 };
 
                 renderStats(0);
